@@ -7,17 +7,21 @@
 
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include "usiTwiSlave.h"
 
 #define TWI_ADDRESS 42
+#define LED_TOGGLE() (PINB |= (1<<PINB1))
 
 int main(void)
 {
 	// Setup variables
 	uint8_t count = 0;
 	int8_t adc_val = 0;
+	uint8_t led_counter = 0;
 	
 	// Setup AVR
+	DDRB |= (1<<PB1);							// Set debugging LED output pin
 	
 	// Setup ADC
 	// Set ADC Mux
@@ -62,6 +66,12 @@ int main(void)
 			// Transmit ADC value
 			usiTwiTransmitByte((uint8_t)adc_val);
 			count++;
-		}		
+		}
+		
+		// Toggle LED heartbeat
+		if(led_counter++ == 0){
+			LED_TOGGLE();
+		}			
+ 
     }
 }
