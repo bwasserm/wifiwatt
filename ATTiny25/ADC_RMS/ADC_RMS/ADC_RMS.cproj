@@ -87,10 +87,10 @@
     <Compile Include="ADC_RMS.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="TWI_slave.c">
+    <Compile Include="usiTwiSlave.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="TWI_slave.h">
+    <Compile Include="usiTwiSlave.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

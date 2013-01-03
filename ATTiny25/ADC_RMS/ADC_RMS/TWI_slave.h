@@ -33,6 +33,12 @@
 */
 
 /****************************************************************************
+  Includes
+  Added by bwasserm
+****************************************************************************/
+#include <avr/interrupt.h>
+
+/****************************************************************************
   TWI Status/Control register definitions
 ****************************************************************************/
 
@@ -69,8 +75,10 @@ void TWI_Start_Transceiver_With_Data( unsigned char * , unsigned char );
 void TWI_Start_Transceiver( void );
 unsigned char TWI_Get_Data_From_Transceiver( unsigned char *, unsigned char );
 
-#pragma vector=TWI_vect
-__interrupt void TWI_ISR( void );
+// Syntax not recognized by GCC. Replacement code that is gcc-happy is below
+//#pragma vector=TWI_vect
+//__interrupt void TWI_ISR( void );
+ISR(TWI_vect);
 
 /****************************************************************************
   Bit and byte definitions

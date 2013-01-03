@@ -7,7 +7,7 @@
 
 
 #include <avr/io.h>
-#include "TWI_Slave.h"
+#include "usiTwiSlave.h"
 
 int main(void)
 {

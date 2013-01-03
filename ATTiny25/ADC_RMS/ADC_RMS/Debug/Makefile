@@ -36,7 +36,7 @@ SUBDIRS :=
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
 ../ADC_RMS.c \
-../TWI_slave.c
+../usiTwiSlave.c
 
 
 PREPROCESSING_SRCS += 
@@ -47,22 +47,22 @@ ASM_SRCS +=
 
 OBJS +=  \
 ADC_RMS.o \
-TWI_slave.o
+usiTwiSlave.o
 
 
 OBJS_AS_ARGS +=  \
 ADC_RMS.o \
-TWI_slave.o
+usiTwiSlave.o
 
 
 C_DEPS +=  \
 ADC_RMS.d \
-TWI_slave.d
+usiTwiSlave.d
 
 
 C_DEPS_AS_ARGS +=  \
 ADC_RMS.d \
-TWI_slave.d
+usiTwiSlave.d
 
 
 OUTPUT_FILE_PATH +=ADC_RMS.elf
