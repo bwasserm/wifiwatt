@@ -9,13 +9,19 @@
 #include <avr/io.h>
 #include "usiTwiSlave.h"
 
+#define TWI_ADDRESS 42
+
 int main(void)
 {
+	// Setup variables
+	uint8_t count = 0;
+	
 	// Setup AVR
 	
 	// Setup ADC
 	
 	// Setup I2C
+	usiTwiSlaveInit( (uint8_t)TWI_ADDRESS );
 	
     while(1)
     {
@@ -24,5 +30,9 @@ int main(void)
 		// Calculate RMS
 		
 		// Transmit Data
+		if(usiTwiDataInTransmitBuffer() == false){
+			usiTwiTransmitByte(count);
+			count++;
+		}			
     }
 }
