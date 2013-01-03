@@ -35,11 +35,12 @@ int main(void)
 			(0<<IPR)|							// Don't enable polarity reversal. It doesn't do us any good
 			(0<<ADTS2)|(0<<ADTS1)|(0<<ADTS0);	// Set ADC to free running mode, so it continually samples
 	// Disable digital pins being used by ADC
-	DIDR0 |= (1<<ADC3D)|(1<<ADC3D)|				// Disable digital pins being used by ADC
-			(0<<ADC3D)|(0<<ADC3D);				// Leave enabled pins being used for digital
+	DIDR0 |= (1<<ADC3D)|(1<<ADC2D)|				// Disable digital pins being used by ADC
+			(0<<ADC1D)|(0<<ADC0D);				// Leave enabled pins being used for digital
 	
 	// Setup I2C (TWI)
 	usiTwiSlaveInit( (uint8_t)TWI_ADDRESS );
+	sei();
 	
 	// Start ADC conversion
 	ADCSRA |= (1<<ADSC);
