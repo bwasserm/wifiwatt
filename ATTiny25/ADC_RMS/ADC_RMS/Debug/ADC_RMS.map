@@ -125,7 +125,7 @@ LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000      0x286
+.text           0x00000000      0x2a2
  *(.vectors)
  .vectors       0x00000000       0x1e c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avr25/crttn25.o
                 0x00000000                __vector_default
@@ -194,29 +194,29 @@ LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1
                 0x00000050                __vector_2
                 0x00000050                __vector_8
                 0x00000050                __vector_10
- .text          0x00000052       0x14 ADC_RMS.o
+ .text          0x00000052       0x30 ADC_RMS.o
                 0x00000052                main
- .text          0x00000066      0x21c usiTwiSlave.o
-                0x00000066                usiTwiSlaveInit
-                0x00000090                usiTwiDataInTransmitBuffer
-                0x000000a2                usiTwiTransmitByte
-                0x000000c2                usiTwiReceiveByte
-                0x000000ea                usiTwiDataInReceiveBuffer
-                0x000000fc                __vector_13
-                0x00000134                __vector_14
- .text          0x00000282        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
- .text          0x00000282        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
- .text          0x00000282        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
-                0x00000282                . = ALIGN (0x2)
+ .text          0x00000082      0x21c usiTwiSlave.o
+                0x00000082                usiTwiSlaveInit
+                0x000000ac                usiTwiDataInTransmitBuffer
+                0x000000be                usiTwiTransmitByte
+                0x000000de                usiTwiReceiveByte
+                0x00000106                usiTwiDataInReceiveBuffer
+                0x00000118                __vector_13
+                0x00000150                __vector_14
+ .text          0x0000029e        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
+ .text          0x0000029e        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
+ .text          0x0000029e        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
+                0x0000029e                . = ALIGN (0x2)
  *(.text.*)
- .text.libgcc   0x00000282        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
- .text.libgcc   0x00000282        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
- .text.libgcc   0x00000282        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
-                0x00000282                . = ALIGN (0x2)
+ .text.libgcc   0x0000029e        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
+ .text.libgcc   0x0000029e        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
+ .text.libgcc   0x0000029e        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
+                0x0000029e                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x00000282        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
-                0x00000282                _exit
-                0x00000282                exit
+ .fini9         0x0000029e        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
+                0x0000029e                _exit
+                0x0000029e                exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -235,11 +235,11 @@ LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x00000282        0x4 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
+ .fini0         0x0000029e        0x4 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
  *(.fini0)
-                0x00000286                _etext = .
+                0x000002a2                _etext = .
 
-.data           0x00800060        0x0 load address 0x00000286
+.data           0x00800060        0x0 load address 0x000002a2
                 0x00800060                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00800060        0x0 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/../../../../avr/lib/avr25/crttn25.o
@@ -270,8 +270,8 @@ LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1
  COMMON         0x00800086        0x2 ADC_RMS.o
                 0x00800086                _onTwiDataRequest
                 0x00800088                PROVIDE (__bss_end, .)
-                0x00000286                __data_load_start = LOADADDR (.data)
-                0x00000286                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x000002a2                __data_load_start = LOADADDR (.data)
+                0x000002a2                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800088        0x0
                 0x00800088                PROVIDE (__noinit_start, .)
@@ -347,13 +347,13 @@ LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000      0x5b5
+.debug_info     0x00000000      0x5cf
  *(.debug_info)
- .debug_info    0x00000000       0xb0 ADC_RMS.o
- .debug_info    0x000000b0      0x26b usiTwiSlave.o
- .debug_info    0x0000031b       0xde c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
- .debug_info    0x000003f9       0xde c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
- .debug_info    0x000004d7       0xde c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
+ .debug_info    0x00000000       0xca ADC_RMS.o
+ .debug_info    0x000000ca      0x26b usiTwiSlave.o
+ .debug_info    0x00000335       0xde c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
+ .debug_info    0x00000413       0xde c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
+ .debug_info    0x000004f1       0xde c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev   0x00000000      0x1f1
@@ -364,30 +364,30 @@ LOAD c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1
  .debug_abbrev  0x000001c9       0x14 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
  .debug_abbrev  0x000001dd       0x14 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
 
-.debug_line     0x00000000      0x3f9
+.debug_line     0x00000000      0x402
  *(.debug_line)
- .debug_line    0x00000000       0xf0 ADC_RMS.o
- .debug_line    0x000000f0      0x162 usiTwiSlave.o
- .debug_line    0x00000252       0x88 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
- .debug_line    0x000002da       0x91 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
- .debug_line    0x0000036b       0x8e c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
+ .debug_line    0x00000000       0xf9 ADC_RMS.o
+ .debug_line    0x000000f9      0x162 usiTwiSlave.o
+ .debug_line    0x0000025b       0x88 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_exit.o)
+ .debug_line    0x000002e3       0x91 c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_copy_data.o)
+ .debug_line    0x00000374       0x8e c:/program files (x86)/atmel/atmel studio 6.0/extensions/atmel/avrgcc/3.4.1.95/avrtoolchain/bin/../lib/gcc/avr/4.6.2/avr25\libgcc.a(_clear_bss.o)
 
 .debug_frame    0x00000000      0x100
  *(.debug_frame)
  .debug_frame   0x00000000       0x24 ADC_RMS.o
  .debug_frame   0x00000024       0xdc usiTwiSlave.o
 
-.debug_str      0x00000000      0x27a
+.debug_str      0x00000000      0x282
  *(.debug_str)
- .debug_str     0x00000000       0xb5 ADC_RMS.o
-                                 0xe9 (size before relaxing)
- .debug_str     0x000000b5      0x1c5 usiTwiSlave.o
+ .debug_str     0x00000000       0xbd ADC_RMS.o
+                                 0xf8 (size before relaxing)
+ .debug_str     0x000000bd      0x1c5 usiTwiSlave.o
                                 0x294 (size before relaxing)
 
-.debug_loc      0x00000000      0x148
+.debug_loc      0x00000000      0x167
  *(.debug_loc)
- .debug_loc     0x00000000       0x1f ADC_RMS.o
- .debug_loc     0x0000001f      0x129 usiTwiSlave.o
+ .debug_loc     0x00000000       0x3e ADC_RMS.o
+ .debug_loc     0x0000003e      0x129 usiTwiSlave.o
 
 .debug_macinfo
  *(.debug_macinfo)
