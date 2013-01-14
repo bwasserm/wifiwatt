@@ -18,7 +18,7 @@ int main(void)
 	// Setup variables
 	uint8_t count = 0;
 	int8_t adc_val = 0;
-	uint8_t led_counter = 0;
+	uint16_t led_counter = 0;
 	
 	// Setup AVR
 	DDRB |= (1<<PB1);							// Set debugging LED output pin
@@ -31,11 +31,12 @@ int main(void)
 	// Set ADC Control Register A
 	ADCSRA = (1<<ADEN)|							// Enable ADC
 			(0<<ADSC)|							// Don't start conversion yet
-			(0<<ADATE)|							// Don't run on triggering
+			(1<<ADATE)|							// Enable triggering so Free Running mode can be set
 			(0<<ADIF)|(0<<ADIE)|				// Don't use the ADC interrupt
 			(1<<ADPS2)|(1<<ADPS1)|(0<<ADPS0);	// Set the clock prescaler to 64, so the 8MHz CPU clock gets scaled to 125kHz
 	// Set ADC Control Register B
 	ADCSRB |= (1<<BIN)|							// Enable bipolar input mode, so we can measure positive and negative voltages (for AC)
+			(0<<ACME)|							// Disable analog comparator
 			(0<<IPR)|							// Don't enable polarity reversal. It doesn't do us any good
 			(0<<ADTS2)|(0<<ADTS1)|(0<<ADTS0);	// Set ADC to free running mode, so it continually samples
 	// Disable digital pins being used by ADC
@@ -47,14 +48,16 @@ int main(void)
 	sei();
 	
 	// Start ADC conversion
-	ADCSRA |= (1<<ADSC);
+	ADCSRA = ADCSRA | (1<<ADSC);
 	
     while(1)
     {
         // Read ADC
 		adc_val = ADCH;
+//		ADCSRA = ADCSRA | (1<<ADSC);		// Reinable for next conversion to happen
 		
 		// Calculate RMS
+		
 		
 		// Transmit Data
 		if(usiTwiDataInTransmitBuffer() == false){
@@ -69,9 +72,11 @@ int main(void)
 		}
 		
 		// Toggle LED heartbeat
-		if(led_counter++ == 0){
-			LED_TOGGLE();
-		}			
+		if(adc_val < 0){
+			if(led_counter++ == 0){
+				LED_TOGGLE();
+			}
+		}						
  
     }
 }
