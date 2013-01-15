@@ -1,3 +1,20 @@
 
 Information about working with RabbitMQ/AMQP:
 http://www.rabbitmq.com/tutorials/amqp-concepts.html
+
+Working C/Rabbit library that's on applepi right now:
+https://github.com/alanxz/rabbitmq-c
+
+Rabbit Server Info:
+login = dict(
+  username = "guest",
+  password = "guest"
+)
+cred = pika.PlainCredentials(**login)
+
+hostinfo = dict(
+  host='localhost',
+  port=5672,
+  virtual_host='/',
+  credentials=cred
+)
