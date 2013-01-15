@@ -3,29 +3,29 @@ ADC_RMS.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .text         000002b8  00000000  00000000  00000094  2**1
+  0 .text         000002c8  00000000  00000000  00000094  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .data         00000000  00800060  000002b8  0000034c  2**0
+  1 .data         00000000  00800060  000002c8  0000035c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  2 .bss          00000028  00800060  00800060  0000034c  2**0
+  2 .bss          00000028  00800060  00800060  0000035c  2**0
                   ALLOC
-  3 .stab         000006b4  00000000  00000000  0000034c  2**2
+  3 .stab         000006b4  00000000  00000000  0000035c  2**2
                   CONTENTS, READONLY, DEBUGGING
-  4 .stabstr      00000085  00000000  00000000  00000a00  2**0
+  4 .stabstr      00000085  00000000  00000000  00000a10  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .debug_aranges 000000a0  00000000  00000000  00000a88  2**3
+  5 .debug_aranges 000000a0  00000000  00000000  00000a98  2**3
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   000005e9  00000000  00000000  00000b28  2**0
+  6 .debug_info   000005de  00000000  00000000  00000b38  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 000001f1  00000000  00000000  00001111  2**0
+  7 .debug_abbrev 000001f1  00000000  00000000  00001116  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   00000407  00000000  00000000  00001302  2**0
+  8 .debug_line   00000409  00000000  00000000  00001307  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000100  00000000  00000000  0000170c  2**2
+  9 .debug_frame  00000100  00000000  00000000  00001710  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    00000297  00000000  00000000  0000180c  2**0
+ 10 .debug_str    0000029d  00000000  00000000  00001810  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    000001ab  00000000  00000000  00001aa3  2**0
+ 11 .debug_loc    000001b5  00000000  00000000  00001aad  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -44,8 +44,8 @@ Disassembly of section .text:
   14:	1d c0       	rjmp	.+58     	; 0x50 <__bad_interrupt>
   16:	1c c0       	rjmp	.+56     	; 0x50 <__bad_interrupt>
   18:	1b c0       	rjmp	.+54     	; 0x50 <__bad_interrupt>
-  1a:	89 c0       	rjmp	.+274    	; 0x12e <__vector_13>
-  1c:	a4 c0       	rjmp	.+328    	; 0x166 <__vector_14>
+  1a:	91 c0       	rjmp	.+290    	; 0x13e <__vector_13>
+  1c:	ac c0       	rjmp	.+344    	; 0x176 <__vector_14>
 
 0000001e <__ctors_end>:
   1e:	11 24       	eor	r1, r1
@@ -57,7 +57,7 @@ Disassembly of section .text:
   26:	10 e0       	ldi	r17, 0x00	; 0
   28:	a0 e6       	ldi	r26, 0x60	; 96
   2a:	b0 e0       	ldi	r27, 0x00	; 0
-  2c:	e8 eb       	ldi	r30, 0xB8	; 184
+  2c:	e8 ec       	ldi	r30, 0xC8	; 200
   2e:	f2 e0       	ldi	r31, 0x02	; 2
   30:	02 c0       	rjmp	.+4      	; 0x36 <__CCP__+0x2>
   32:	05 90       	lpm	r0, Z+
@@ -80,14 +80,14 @@ Disassembly of section .text:
   48:	b1 07       	cpc	r27, r17
   4a:	e1 f7       	brne	.-8      	; 0x44 <.do_clear_bss_loop>
   4c:	02 d0       	rcall	.+4      	; 0x52 <main>
-  4e:	32 c1       	rjmp	.+612    	; 0x2b4 <_exit>
+  4e:	3a c1       	rjmp	.+628    	; 0x2c4 <_exit>
 
 00000050 <__bad_interrupt>:
   50:	d7 cf       	rjmp	.-82     	; 0x0 <__vectors>
 
 00000052 <main>:
 	uint8_t count = 0;
-	int8_t adc_val = 0;
+	uint16_t adc_val = 0;
 	uint16_t led_counter = 0;
 	
 	// Setup AVR
@@ -97,9 +97,9 @@ Disassembly of section .text:
 	// Setup ADC
 	// Set ADC Mux
 	ADMUX = (0<<REFS2)|(0<<REFS1)|(0<<REFS0)|	// Use VCC as Vref, disconnected from AREF pin (which is in use as SDA for TWI)
-  54:	82 e2       	ldi	r24, 0x22	; 34
+  54:	82 e0       	ldi	r24, 0x02	; 2
   56:	87 b9       	out	0x07, r24	; 7
-			(1<<ADLAR)|							// Left-shift the ADC result, so the first 8 bits can be read from a single register (ADCH)
+			(0<<ADLAR)|							// Don't left-shift the ADC result, so the first 8 bits can be read from a single register (ADCH)
 //			(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0);	// Use difference between PB4 and PB3, with gain of 1x. Use 0111 for 20x gain
 			(0<<MUX3)|(0<<MUX2)|(1<<MUX1)|(0<<MUX0);	// Read ADC2 (PB4)
 	// Set ADC Control Register A
@@ -125,8 +125,8 @@ Disassembly of section .text:
 	
 	// Setup I2C (TWI)
 	usiTwiSlaveInit( (uint8_t)TWI_ADDRESS );
-  64:	82 e0       	ldi	r24, 0x02	; 2
-  66:	18 d0       	rcall	.+48     	; 0x98 <usiTwiSlaveInit>
+  64:	8a e2       	ldi	r24, 0x2A	; 42
+  66:	20 d0       	rcall	.+64     	; 0xa8 <usiTwiSlaveInit>
 	sei();
   68:	78 94       	sei
 	
@@ -137,10 +137,10 @@ int main(void)
 {
 	// Setup variables
 	uint8_t count = 0;
-	int8_t adc_val = 0;
+	uint16_t adc_val = 0;
 	uint16_t led_counter = 0;
-  6c:	c0 e0       	ldi	r28, 0x00	; 0
-  6e:	d0 e0       	ldi	r29, 0x00	; 0
+  6c:	ee 24       	eor	r14, r14
+  6e:	ff 24       	eor	r15, r15
   70:	01 c0       	rjmp	.+2      	; 0x74 <main+0x22>
 			count++;
 		}
@@ -148,539 +148,543 @@ int main(void)
 		// Toggle LED heartbeat
 		if(adc_val < 64){
 			if(led_counter++ == 0){
-  72:	ec 01       	movw	r28, r24
+  72:	7c 01       	movw	r14, r24
 	ADCSRA = ADCSRA | (1<<ADSC);
 	
     while(1)
     {
         // Read ADC
-		adc_val = ADCH;
-  74:	15 b1       	in	r17, 0x05	; 5
-  76:	01 2f       	mov	r16, r17
-		ADCSRA = ADCSRA | (1<<ADSC);		// Reinable for next conversion to happen
-  78:	36 9a       	sbi	0x06, 6	; 6
-		
-		// Calculate RMS
-		
-		
-		// Transmit Data
-		if(usiTwiDataInTransmitBuffer() == false){
-  7a:	23 d0       	rcall	.+70     	; 0xc2 <usiTwiDataInTransmitBuffer>
+		adc_val = ADCH << 8 | ADCL;
+  74:	85 b1       	in	r24, 0x05	; 5
+  76:	c4 b1       	in	r28, 0x04	; 4
+  78:	18 2f       	mov	r17, r24
+  7a:	00 e0       	ldi	r16, 0x00	; 0
+  7c:	d0 e0       	ldi	r29, 0x00	; 0
+  7e:	c0 2b       	or	r28, r16
+  80:	d1 2b       	or	r29, r17
+		ADCSRA = ADCSRA | (1<<ADSC);		// Re-enable for next conversion to happen
+  82:	36 9a       	sbi	0x06, 6	; 6
 			// Transmit count for testing
 			//usiTwiTransmitByte(count);
 			count++;
 		}
+		*/
 		if(usiTwiDataInTransmitBuffer() == false){
-  7c:	22 d0       	rcall	.+68     	; 0xc2 <usiTwiDataInTransmitBuffer>
-  7e:	88 23       	and	r24, r24
-  80:	11 f4       	brne	.+4      	; 0x86 <main+0x34>
+  84:	26 d0       	rcall	.+76     	; 0xd2 <usiTwiDataInTransmitBuffer>
+  86:	88 23       	and	r24, r24
+  88:	21 f4       	brne	.+8      	; 0x92 <main+0x40>
 			// Transmit ADC value
+			usiTwiTransmitByte((uint8_t)(adc_val >> 8));
+  8a:	8d 2f       	mov	r24, r29
+  8c:	2b d0       	rcall	.+86     	; 0xe4 <usiTwiTransmitByte>
 			usiTwiTransmitByte((uint8_t)adc_val);
-  82:	81 2f       	mov	r24, r17
-  84:	27 d0       	rcall	.+78     	; 0xd4 <usiTwiTransmitByte>
+  8e:	8c 2f       	mov	r24, r28
+  90:	29 d0       	rcall	.+82     	; 0xe4 <usiTwiTransmitByte>
 			count++;
 		}
 		
 		// Toggle LED heartbeat
 		if(adc_val < 64){
-  86:	00 34       	cpi	r16, 0x40	; 64
-  88:	ac f7       	brge	.-22     	; 0x74 <main+0x22>
+  92:	c0 34       	cpi	r28, 0x40	; 64
+  94:	d1 05       	cpc	r29, r1
+  96:	70 f7       	brcc	.-36     	; 0x74 <main+0x22>
 			if(led_counter++ == 0){
-  8a:	ce 01       	movw	r24, r28
-  8c:	01 96       	adiw	r24, 0x01	; 1
-  8e:	20 97       	sbiw	r28, 0x00	; 0
-  90:	81 f7       	brne	.-32     	; 0x72 <main+0x20>
+  98:	c7 01       	movw	r24, r14
+  9a:	01 96       	adiw	r24, 0x01	; 1
+  9c:	e1 14       	cp	r14, r1
+  9e:	f1 04       	cpc	r15, r1
+  a0:	41 f7       	brne	.-48     	; 0x72 <main+0x20>
 				LED_TOGGLE();
-  92:	b1 9a       	sbi	0x16, 1	; 22
+  a2:	b1 9a       	sbi	0x16, 1	; 22
 			count++;
 		}
 		
 		// Toggle LED heartbeat
 		if(adc_val < 64){
 			if(led_counter++ == 0){
-  94:	ec 01       	movw	r28, r24
-  96:	ee cf       	rjmp	.-36     	; 0x74 <main+0x22>
+  a4:	7c 01       	movw	r14, r24
+  a6:	e6 cf       	rjmp	.-52     	; 0x74 <main+0x22>
 
-00000098 <usiTwiSlaveInit>:
+000000a8 <usiTwiSlaveInit>:
 void
 flushTwiBuffers(
   void
 )
 {
   rxTail = 0;
-  98:	10 92 62 00 	sts	0x0062, r1
+  a8:	10 92 62 00 	sts	0x0062, r1
   rxHead = 0;
-  9c:	10 92 63 00 	sts	0x0063, r1
+  ac:	10 92 63 00 	sts	0x0063, r1
   txTail = 0;
-  a0:	10 92 60 00 	sts	0x0060, r1
+  b0:	10 92 60 00 	sts	0x0060, r1
   txHead = 0;
-  a4:	10 92 61 00 	sts	0x0061, r1
+  b4:	10 92 61 00 	sts	0x0061, r1
 )
 {
 
   flushTwiBuffers( );
 
   slaveAddress = ownAddress;
-  a8:	80 93 65 00 	sts	0x0065, r24
+  b8:	80 93 65 00 	sts	0x0065, r24
   // low when a start condition is detected or a counter overflow (only
   // for USIWM1, USIWM0 = 11).  This inserts a wait state.  SCL is released
   // by the ISRs (USI_START_vect and USI_OVERFLOW_vect).
 
   // Set SCL and SDA as output
   DDR_USI |= ( 1 << PORT_USI_SCL ) | ( 1 << PORT_USI_SDA );
-  ac:	87 b3       	in	r24, 0x17	; 23
-  ae:	85 60       	ori	r24, 0x05	; 5
-  b0:	87 bb       	out	0x17, r24	; 23
+  bc:	87 b3       	in	r24, 0x17	; 23
+  be:	85 60       	ori	r24, 0x05	; 5
+  c0:	87 bb       	out	0x17, r24	; 23
 
   // set SCL high
   PORT_USI |= ( 1 << PORT_USI_SCL );
-  b2:	c2 9a       	sbi	0x18, 2	; 24
+  c2:	c2 9a       	sbi	0x18, 2	; 24
 
   // set SDA high
   PORT_USI |= ( 1 << PORT_USI_SDA );
-  b4:	c0 9a       	sbi	0x18, 0	; 24
+  c4:	c0 9a       	sbi	0x18, 0	; 24
 
   // Set SDA as input
   DDR_USI &= ~( 1 << PORT_USI_SDA );
-  b6:	b8 98       	cbi	0x17, 0	; 23
+  c6:	b8 98       	cbi	0x17, 0	; 23
 
   USICR =
-  b8:	88 ea       	ldi	r24, 0xA8	; 168
-  ba:	8d b9       	out	0x0d, r24	; 13
+  c8:	88 ea       	ldi	r24, 0xA8	; 168
+  ca:	8d b9       	out	0x0d, r24	; 13
        // no toggle clock-port pin
        ( 0 << USITC );
 
   // clear all interrupt flags and reset overflow counter
 
   USISR = ( 1 << USI_START_COND_INT ) | ( 1 << USIOIF ) | ( 1 << USIPF ) | ( 1 << USIDC );
-  bc:	80 ef       	ldi	r24, 0xF0	; 240
-  be:	8e b9       	out	0x0e, r24	; 14
+  cc:	80 ef       	ldi	r24, 0xF0	; 240
+  ce:	8e b9       	out	0x0e, r24	; 14
 
 } // end usiTwiSlaveInit
-  c0:	08 95       	ret
+  d0:	08 95       	ret
 
-000000c2 <usiTwiDataInTransmitBuffer>:
+000000d2 <usiTwiDataInTransmitBuffer>:
 
 bool usiTwiDataInTransmitBuffer(void)
 {
 
   // return 0 (false) if the receive buffer is empty
   return txHead != txTail;
-  c2:	20 91 61 00 	lds	r18, 0x0061
-  c6:	90 91 60 00 	lds	r25, 0x0060
-  ca:	81 e0       	ldi	r24, 0x01	; 1
-  cc:	29 17       	cp	r18, r25
-  ce:	09 f4       	brne	.+2      	; 0xd2 <usiTwiDataInTransmitBuffer+0x10>
-  d0:	80 e0       	ldi	r24, 0x00	; 0
+  d2:	20 91 61 00 	lds	r18, 0x0061
+  d6:	90 91 60 00 	lds	r25, 0x0060
+  da:	81 e0       	ldi	r24, 0x01	; 1
+  dc:	29 17       	cp	r18, r25
+  de:	09 f4       	brne	.+2      	; 0xe2 <__stack+0x3>
+  e0:	80 e0       	ldi	r24, 0x00	; 0
 
 } // end usiTwiDataInTransmitBuffer
-  d2:	08 95       	ret
+  e2:	08 95       	ret
 
-000000d4 <usiTwiTransmitByte>:
+000000e4 <usiTwiTransmitByte>:
 {
 
   uint8_t tmphead;
 
   // calculate buffer index
   tmphead = ( txHead + 1 ) & TWI_TX_BUFFER_MASK;
-  d4:	20 91 61 00 	lds	r18, 0x0061
-  d8:	2f 5f       	subi	r18, 0xFF	; 255
-  da:	2f 70       	andi	r18, 0x0F	; 15
+  e4:	20 91 61 00 	lds	r18, 0x0061
+  e8:	2f 5f       	subi	r18, 0xFF	; 255
+  ea:	2f 70       	andi	r18, 0x0F	; 15
 
   // wait for free space in buffer
   while ( tmphead == txTail );
-  dc:	90 91 60 00 	lds	r25, 0x0060
-  e0:	29 17       	cp	r18, r25
-  e2:	e1 f3       	breq	.-8      	; 0xdc <usiTwiTransmitByte+0x8>
+  ec:	90 91 60 00 	lds	r25, 0x0060
+  f0:	29 17       	cp	r18, r25
+  f2:	e1 f3       	breq	.-8      	; 0xec <usiTwiTransmitByte+0x8>
 
   // store data in buffer
   txBuf[ tmphead ] = data;
-  e4:	e6 e6       	ldi	r30, 0x66	; 102
-  e6:	f0 e0       	ldi	r31, 0x00	; 0
-  e8:	e2 0f       	add	r30, r18
-  ea:	f1 1d       	adc	r31, r1
-  ec:	80 83       	st	Z, r24
+  f4:	e6 e6       	ldi	r30, 0x66	; 102
+  f6:	f0 e0       	ldi	r31, 0x00	; 0
+  f8:	e2 0f       	add	r30, r18
+  fa:	f1 1d       	adc	r31, r1
+  fc:	80 83       	st	Z, r24
 
   // store new index
   txHead = tmphead;
-  ee:	20 93 61 00 	sts	0x0061, r18
+  fe:	20 93 61 00 	sts	0x0061, r18
 
 } // end usiTwiTransmitByte
-  f2:	08 95       	ret
+ 102:	08 95       	ret
 
-000000f4 <usiTwiReceiveByte>:
+00000104 <usiTwiReceiveByte>:
   void
 )
 {
 
   // wait for Rx data
   while ( rxHead == rxTail );
-  f4:	90 91 63 00 	lds	r25, 0x0063
-  f8:	80 91 62 00 	lds	r24, 0x0062
-  fc:	98 17       	cp	r25, r24
-  fe:	d1 f3       	breq	.-12     	; 0xf4 <usiTwiReceiveByte>
+ 104:	90 91 63 00 	lds	r25, 0x0063
+ 108:	80 91 62 00 	lds	r24, 0x0062
+ 10c:	98 17       	cp	r25, r24
+ 10e:	d1 f3       	breq	.-12     	; 0x104 <usiTwiReceiveByte>
 
   // calculate buffer index
   rxTail = ( rxTail + 1 ) & TWI_RX_BUFFER_MASK;
- 100:	80 91 62 00 	lds	r24, 0x0062
- 104:	8f 5f       	subi	r24, 0xFF	; 255
- 106:	8f 70       	andi	r24, 0x0F	; 15
- 108:	80 93 62 00 	sts	0x0062, r24
+ 110:	80 91 62 00 	lds	r24, 0x0062
+ 114:	8f 5f       	subi	r24, 0xFF	; 255
+ 116:	8f 70       	andi	r24, 0x0F	; 15
+ 118:	80 93 62 00 	sts	0x0062, r24
 
   // return data from the buffer.
   return rxBuf[ rxTail ];
- 10c:	80 91 62 00 	lds	r24, 0x0062
- 110:	e6 e7       	ldi	r30, 0x76	; 118
- 112:	f0 e0       	ldi	r31, 0x00	; 0
- 114:	e8 0f       	add	r30, r24
- 116:	f1 1d       	adc	r31, r1
+ 11c:	80 91 62 00 	lds	r24, 0x0062
+ 120:	e6 e7       	ldi	r30, 0x76	; 118
+ 122:	f0 e0       	ldi	r31, 0x00	; 0
+ 124:	e8 0f       	add	r30, r24
+ 126:	f1 1d       	adc	r31, r1
 
 } // end usiTwiReceiveByte
- 118:	80 81       	ld	r24, Z
- 11a:	08 95       	ret
+ 128:	80 81       	ld	r24, Z
+ 12a:	08 95       	ret
 
-0000011c <usiTwiDataInReceiveBuffer>:
+0000012c <usiTwiDataInReceiveBuffer>:
   void
 )
 {
 
   // return 0 (false) if the receive buffer is empty
   return rxHead != rxTail;
- 11c:	20 91 63 00 	lds	r18, 0x0063
- 120:	90 91 62 00 	lds	r25, 0x0062
- 124:	81 e0       	ldi	r24, 0x01	; 1
- 126:	29 17       	cp	r18, r25
- 128:	09 f4       	brne	.+2      	; 0x12c <usiTwiDataInReceiveBuffer+0x10>
- 12a:	80 e0       	ldi	r24, 0x00	; 0
+ 12c:	20 91 63 00 	lds	r18, 0x0063
+ 130:	90 91 62 00 	lds	r25, 0x0062
+ 134:	81 e0       	ldi	r24, 0x01	; 1
+ 136:	29 17       	cp	r18, r25
+ 138:	09 f4       	brne	.+2      	; 0x13c <usiTwiDataInReceiveBuffer+0x10>
+ 13a:	80 e0       	ldi	r24, 0x00	; 0
 
 } // end usiTwiDataInReceiveBuffer
- 12c:	08 95       	ret
+ 13c:	08 95       	ret
 
-0000012e <__vector_13>:
+0000013e <__vector_13>:
                             USI Start Condition ISR
 
 ********************************************************************************/
 
 ISR( USI_START_VECTOR )
 {
- 12e:	1f 92       	push	r1
- 130:	0f 92       	push	r0
- 132:	0f b6       	in	r0, 0x3f	; 63
- 134:	0f 92       	push	r0
- 136:	11 24       	eor	r1, r1
- 138:	8f 93       	push	r24
+ 13e:	1f 92       	push	r1
+ 140:	0f 92       	push	r0
+ 142:	0f b6       	in	r0, 0x3f	; 63
+ 144:	0f 92       	push	r0
+ 146:	11 24       	eor	r1, r1
+ 148:	8f 93       	push	r24
 
   // set default starting conditions for new TWI package
   overflowState = USI_SLAVE_CHECK_ADDRESS;
- 13a:	10 92 64 00 	sts	0x0064, r1
+ 14a:	10 92 64 00 	sts	0x0064, r1
 
   // set SDA as input
   DDR_USI &= ~( 1 << PORT_USI_SDA );
- 13e:	b8 98       	cbi	0x17, 0	; 23
+ 14e:	b8 98       	cbi	0x17, 0	; 23
   // wait for SCL to go low to ensure the Start Condition has completed (the
   // start detector will hold SCL low ) - if a Stop Condition arises then leave
   // the interrupt to prevent waiting forever - don't use USISR to test for Stop
   // Condition as in Application Note AVR312 because the Stop Condition Flag is
   // going to be set from the last TWI sequence
   while (
- 140:	b2 9b       	sbis	0x16, 2	; 22
- 142:	02 c0       	rjmp	.+4      	; 0x148 <__vector_13+0x1a>
+ 150:	b2 9b       	sbis	0x16, 2	; 22
+ 152:	02 c0       	rjmp	.+4      	; 0x158 <__vector_13+0x1a>
        // SCL his high
        ( PIN_USI & ( 1 << PIN_USI_SCL ) ) &&
- 144:	b0 9b       	sbis	0x16, 0	; 22
- 146:	fc cf       	rjmp	.-8      	; 0x140 <__vector_13+0x12>
+ 154:	b0 9b       	sbis	0x16, 0	; 22
+ 156:	fc cf       	rjmp	.-8      	; 0x150 <__vector_13+0x12>
        // and SDA is low
        !( ( PIN_USI & ( 1 << PIN_USI_SDA ) ) )
   );
 
 
   if ( !( PIN_USI & ( 1 << PIN_USI_SDA ) ) )
- 148:	b0 99       	sbic	0x16, 0	; 22
- 14a:	03 c0       	rjmp	.+6      	; 0x152 <__vector_13+0x24>
+ 158:	b0 99       	sbic	0x16, 0	; 22
+ 15a:	03 c0       	rjmp	.+6      	; 0x162 <__vector_13+0x24>
   {
 
     // a Stop Condition did not occur
 
     USICR =
- 14c:	88 ef       	ldi	r24, 0xF8	; 248
- 14e:	8d b9       	out	0x0d, r24	; 13
- 150:	02 c0       	rjmp	.+4      	; 0x156 <__vector_13+0x28>
+ 15c:	88 ef       	ldi	r24, 0xF8	; 248
+ 15e:	8d b9       	out	0x0d, r24	; 13
+ 160:	02 c0       	rjmp	.+4      	; 0x166 <__vector_13+0x28>
   }
   else
   {
 
     // a Stop Condition did occur
     USICR =
- 152:	88 ea       	ldi	r24, 0xA8	; 168
- 154:	8d b9       	out	0x0d, r24	; 13
+ 162:	88 ea       	ldi	r24, 0xA8	; 168
+ 164:	8d b9       	out	0x0d, r24	; 13
          // no toggle clock-port pin
          ( 0 << USITC );
 
   } // end if
 
   USISR =
- 156:	80 ef       	ldi	r24, 0xF0	; 240
- 158:	8e b9       	out	0x0e, r24	; 14
+ 166:	80 ef       	ldi	r24, 0xF0	; 240
+ 168:	8e b9       	out	0x0e, r24	; 14
        ( 1 << USI_START_COND_INT ) | ( 1 << USIOIF ) |
        ( 1 << USIPF ) |( 1 << USIDC ) |
        // set USI to sample 8 bits (count 16 external SCL pin toggles)
        ( 0x0 << USICNT0);
 
 } // end ISR( USI_START_VECTOR )
- 15a:	8f 91       	pop	r24
- 15c:	0f 90       	pop	r0
- 15e:	0f be       	out	0x3f, r0	; 63
- 160:	0f 90       	pop	r0
- 162:	1f 90       	pop	r1
- 164:	18 95       	reti
+ 16a:	8f 91       	pop	r24
+ 16c:	0f 90       	pop	r0
+ 16e:	0f be       	out	0x3f, r0	; 63
+ 170:	0f 90       	pop	r0
+ 172:	1f 90       	pop	r1
+ 174:	18 95       	reti
 
-00000166 <__vector_14>:
+00000176 <__vector_14>:
 Only disabled when waiting for a new Start Condition.
 
 ********************************************************************************/
 
 ISR( USI_OVERFLOW_VECTOR )
 {
- 166:	1f 92       	push	r1
- 168:	0f 92       	push	r0
- 16a:	0f b6       	in	r0, 0x3f	; 63
- 16c:	0f 92       	push	r0
- 16e:	11 24       	eor	r1, r1
- 170:	2f 93       	push	r18
- 172:	3f 93       	push	r19
- 174:	4f 93       	push	r20
- 176:	5f 93       	push	r21
- 178:	6f 93       	push	r22
- 17a:	7f 93       	push	r23
- 17c:	8f 93       	push	r24
- 17e:	9f 93       	push	r25
- 180:	af 93       	push	r26
- 182:	bf 93       	push	r27
- 184:	ef 93       	push	r30
- 186:	ff 93       	push	r31
+ 176:	1f 92       	push	r1
+ 178:	0f 92       	push	r0
+ 17a:	0f b6       	in	r0, 0x3f	; 63
+ 17c:	0f 92       	push	r0
+ 17e:	11 24       	eor	r1, r1
+ 180:	2f 93       	push	r18
+ 182:	3f 93       	push	r19
+ 184:	4f 93       	push	r20
+ 186:	5f 93       	push	r21
+ 188:	6f 93       	push	r22
+ 18a:	7f 93       	push	r23
+ 18c:	8f 93       	push	r24
+ 18e:	9f 93       	push	r25
+ 190:	af 93       	push	r26
+ 192:	bf 93       	push	r27
+ 194:	ef 93       	push	r30
+ 196:	ff 93       	push	r31
 
   switch ( overflowState )
- 188:	80 91 64 00 	lds	r24, 0x0064
- 18c:	82 30       	cpi	r24, 0x02	; 2
- 18e:	09 f4       	brne	.+2      	; 0x192 <__vector_14+0x2c>
- 190:	5c c0       	rjmp	.+184    	; 0x24a <__vector_14+0xe4>
- 192:	83 30       	cpi	r24, 0x03	; 3
- 194:	30 f4       	brcc	.+12     	; 0x1a2 <__vector_14+0x3c>
- 196:	88 23       	and	r24, r24
- 198:	69 f0       	breq	.+26     	; 0x1b4 <__vector_14+0x4e>
- 19a:	81 30       	cpi	r24, 0x01	; 1
- 19c:	09 f0       	breq	.+2      	; 0x1a0 <__vector_14+0x3a>
- 19e:	79 c0       	rjmp	.+242    	; 0x292 <__vector_14+0x12c>
- 1a0:	34 c0       	rjmp	.+104    	; 0x20a <__vector_14+0xa4>
- 1a2:	84 30       	cpi	r24, 0x04	; 4
- 1a4:	09 f4       	brne	.+2      	; 0x1a8 <__vector_14+0x42>
- 1a6:	59 c0       	rjmp	.+178    	; 0x25a <__vector_14+0xf4>
- 1a8:	84 30       	cpi	r24, 0x04	; 4
- 1aa:	38 f1       	brcs	.+78     	; 0x1fa <__vector_14+0x94>
- 1ac:	85 30       	cpi	r24, 0x05	; 5
- 1ae:	09 f0       	breq	.+2      	; 0x1b2 <__vector_14+0x4c>
- 1b0:	70 c0       	rjmp	.+224    	; 0x292 <__vector_14+0x12c>
- 1b2:	5a c0       	rjmp	.+180    	; 0x268 <__vector_14+0x102>
+ 198:	80 91 64 00 	lds	r24, 0x0064
+ 19c:	82 30       	cpi	r24, 0x02	; 2
+ 19e:	09 f4       	brne	.+2      	; 0x1a2 <__vector_14+0x2c>
+ 1a0:	5c c0       	rjmp	.+184    	; 0x25a <__vector_14+0xe4>
+ 1a2:	83 30       	cpi	r24, 0x03	; 3
+ 1a4:	30 f4       	brcc	.+12     	; 0x1b2 <__vector_14+0x3c>
+ 1a6:	88 23       	and	r24, r24
+ 1a8:	69 f0       	breq	.+26     	; 0x1c4 <__vector_14+0x4e>
+ 1aa:	81 30       	cpi	r24, 0x01	; 1
+ 1ac:	09 f0       	breq	.+2      	; 0x1b0 <__vector_14+0x3a>
+ 1ae:	79 c0       	rjmp	.+242    	; 0x2a2 <__vector_14+0x12c>
+ 1b0:	34 c0       	rjmp	.+104    	; 0x21a <__vector_14+0xa4>
+ 1b2:	84 30       	cpi	r24, 0x04	; 4
+ 1b4:	09 f4       	brne	.+2      	; 0x1b8 <__vector_14+0x42>
+ 1b6:	59 c0       	rjmp	.+178    	; 0x26a <__vector_14+0xf4>
+ 1b8:	84 30       	cpi	r24, 0x04	; 4
+ 1ba:	38 f1       	brcs	.+78     	; 0x20a <__vector_14+0x94>
+ 1bc:	85 30       	cpi	r24, 0x05	; 5
+ 1be:	09 f0       	breq	.+2      	; 0x1c2 <__vector_14+0x4c>
+ 1c0:	70 c0       	rjmp	.+224    	; 0x2a2 <__vector_14+0x12c>
+ 1c2:	5a c0       	rjmp	.+180    	; 0x278 <__vector_14+0x102>
   {
 
     // Address mode: check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK,
     // else reset USI
     case USI_SLAVE_CHECK_ADDRESS:
       if ( ( USIDR == 0 ) || ( ( USIDR >> 1 ) == slaveAddress) )
- 1b4:	8f b1       	in	r24, 0x0f	; 15
- 1b6:	88 23       	and	r24, r24
- 1b8:	31 f0       	breq	.+12     	; 0x1c6 <__vector_14+0x60>
- 1ba:	9f b1       	in	r25, 0x0f	; 15
- 1bc:	96 95       	lsr	r25
- 1be:	80 91 65 00 	lds	r24, 0x0065
- 1c2:	98 17       	cp	r25, r24
- 1c4:	a9 f4       	brne	.+42     	; 0x1f0 <__vector_14+0x8a>
+ 1c4:	8f b1       	in	r24, 0x0f	; 15
+ 1c6:	88 23       	and	r24, r24
+ 1c8:	31 f0       	breq	.+12     	; 0x1d6 <__vector_14+0x60>
+ 1ca:	9f b1       	in	r25, 0x0f	; 15
+ 1cc:	96 95       	lsr	r25
+ 1ce:	80 91 65 00 	lds	r24, 0x0065
+ 1d2:	98 17       	cp	r25, r24
+ 1d4:	a9 f4       	brne	.+42     	; 0x200 <__vector_14+0x8a>
       {
          // callback
          if(_onTwiDataRequest) _onTwiDataRequest();
- 1c6:	e0 91 86 00 	lds	r30, 0x0086
- 1ca:	f0 91 87 00 	lds	r31, 0x0087
- 1ce:	30 97       	sbiw	r30, 0x00	; 0
- 1d0:	09 f0       	breq	.+2      	; 0x1d4 <__vector_14+0x6e>
- 1d2:	09 95       	icall
+ 1d6:	e0 91 86 00 	lds	r30, 0x0086
+ 1da:	f0 91 87 00 	lds	r31, 0x0087
+ 1de:	30 97       	sbiw	r30, 0x00	; 0
+ 1e0:	09 f0       	breq	.+2      	; 0x1e4 <__vector_14+0x6e>
+ 1e2:	09 95       	icall
          if ( USIDR & 0x01 )
- 1d4:	78 9b       	sbis	0x0f, 0	; 15
- 1d6:	04 c0       	rjmp	.+8      	; 0x1e0 <__vector_14+0x7a>
+ 1e4:	78 9b       	sbis	0x0f, 0	; 15
+ 1e6:	04 c0       	rjmp	.+8      	; 0x1f0 <__vector_14+0x7a>
         {
           overflowState = USI_SLAVE_SEND_DATA;
- 1d8:	81 e0       	ldi	r24, 0x01	; 1
- 1da:	80 93 64 00 	sts	0x0064, r24
- 1de:	03 c0       	rjmp	.+6      	; 0x1e6 <__vector_14+0x80>
+ 1e8:	81 e0       	ldi	r24, 0x01	; 1
+ 1ea:	80 93 64 00 	sts	0x0064, r24
+ 1ee:	03 c0       	rjmp	.+6      	; 0x1f6 <__vector_14+0x80>
         }
         else
         {
           overflowState = USI_SLAVE_REQUEST_DATA;
- 1e0:	84 e0       	ldi	r24, 0x04	; 4
- 1e2:	80 93 64 00 	sts	0x0064, r24
+ 1f0:	84 e0       	ldi	r24, 0x04	; 4
+ 1f2:	80 93 64 00 	sts	0x0064, r24
         } // end if
         SET_USI_TO_SEND_ACK( );
- 1e6:	1f b8       	out	0x0f, r1	; 15
- 1e8:	b8 9a       	sbi	0x17, 0	; 23
- 1ea:	8e e7       	ldi	r24, 0x7E	; 126
- 1ec:	8e b9       	out	0x0e, r24	; 14
- 1ee:	51 c0       	rjmp	.+162    	; 0x292 <__vector_14+0x12c>
+ 1f6:	1f b8       	out	0x0f, r1	; 15
+ 1f8:	b8 9a       	sbi	0x17, 0	; 23
+ 1fa:	8e e7       	ldi	r24, 0x7E	; 126
+ 1fc:	8e b9       	out	0x0e, r24	; 14
+ 1fe:	51 c0       	rjmp	.+162    	; 0x2a2 <__vector_14+0x12c>
       }
       else
       {
         SET_USI_TO_TWI_START_CONDITION_MODE( );
- 1f0:	88 ea       	ldi	r24, 0xA8	; 168
- 1f2:	8d b9       	out	0x0d, r24	; 13
- 1f4:	80 e7       	ldi	r24, 0x70	; 112
- 1f6:	8e b9       	out	0x0e, r24	; 14
- 1f8:	4c c0       	rjmp	.+152    	; 0x292 <__vector_14+0x12c>
+ 200:	88 ea       	ldi	r24, 0xA8	; 168
+ 202:	8d b9       	out	0x0d, r24	; 13
+ 204:	80 e7       	ldi	r24, 0x70	; 112
+ 206:	8e b9       	out	0x0e, r24	; 14
+ 208:	4c c0       	rjmp	.+152    	; 0x2a2 <__vector_14+0x12c>
       break;
 
     // Master write data mode: check reply and goto USI_SLAVE_SEND_DATA if OK,
     // else reset USI
     case USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA:
       if ( USIDR )
- 1fa:	8f b1       	in	r24, 0x0f	; 15
- 1fc:	88 23       	and	r24, r24
- 1fe:	29 f0       	breq	.+10     	; 0x20a <__vector_14+0xa4>
+ 20a:	8f b1       	in	r24, 0x0f	; 15
+ 20c:	88 23       	and	r24, r24
+ 20e:	29 f0       	breq	.+10     	; 0x21a <__vector_14+0xa4>
       {
         // if NACK, the master does not want more data
         SET_USI_TO_TWI_START_CONDITION_MODE( );
- 200:	88 ea       	ldi	r24, 0xA8	; 168
- 202:	8d b9       	out	0x0d, r24	; 13
- 204:	80 e7       	ldi	r24, 0x70	; 112
- 206:	8e b9       	out	0x0e, r24	; 14
+ 210:	88 ea       	ldi	r24, 0xA8	; 168
+ 212:	8d b9       	out	0x0d, r24	; 13
+ 214:	80 e7       	ldi	r24, 0x70	; 112
+ 216:	8e b9       	out	0x0e, r24	; 14
         return;
- 208:	44 c0       	rjmp	.+136    	; 0x292 <__vector_14+0x12c>
+ 218:	44 c0       	rjmp	.+136    	; 0x2a2 <__vector_14+0x12c>
 
     // copy data from buffer to USIDR and set USI to shift byte
     // next USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA
     case USI_SLAVE_SEND_DATA:
       // Get data from Buffer
       if ( txHead != txTail )
- 20a:	90 91 61 00 	lds	r25, 0x0061
- 20e:	80 91 60 00 	lds	r24, 0x0060
- 212:	98 17       	cp	r25, r24
- 214:	a9 f0       	breq	.+42     	; 0x240 <__vector_14+0xda>
+ 21a:	90 91 61 00 	lds	r25, 0x0061
+ 21e:	80 91 60 00 	lds	r24, 0x0060
+ 222:	98 17       	cp	r25, r24
+ 224:	a9 f0       	breq	.+42     	; 0x250 <__vector_14+0xda>
       {
         txTail = ( txTail + 1 ) & TWI_TX_BUFFER_MASK;
- 216:	80 91 60 00 	lds	r24, 0x0060
- 21a:	8f 5f       	subi	r24, 0xFF	; 255
- 21c:	8f 70       	andi	r24, 0x0F	; 15
- 21e:	80 93 60 00 	sts	0x0060, r24
+ 226:	80 91 60 00 	lds	r24, 0x0060
+ 22a:	8f 5f       	subi	r24, 0xFF	; 255
+ 22c:	8f 70       	andi	r24, 0x0F	; 15
+ 22e:	80 93 60 00 	sts	0x0060, r24
         USIDR = txBuf[ txTail ];
- 222:	80 91 60 00 	lds	r24, 0x0060
- 226:	e6 e6       	ldi	r30, 0x66	; 102
- 228:	f0 e0       	ldi	r31, 0x00	; 0
- 22a:	e8 0f       	add	r30, r24
- 22c:	f1 1d       	adc	r31, r1
- 22e:	80 81       	ld	r24, Z
- 230:	8f b9       	out	0x0f, r24	; 15
+ 232:	80 91 60 00 	lds	r24, 0x0060
+ 236:	e6 e6       	ldi	r30, 0x66	; 102
+ 238:	f0 e0       	ldi	r31, 0x00	; 0
+ 23a:	e8 0f       	add	r30, r24
+ 23c:	f1 1d       	adc	r31, r1
+ 23e:	80 81       	ld	r24, Z
+ 240:	8f b9       	out	0x0f, r24	; 15
       {
         // the buffer is empty
         SET_USI_TO_TWI_START_CONDITION_MODE( );
         return;
       } // end if
       overflowState = USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
- 232:	82 e0       	ldi	r24, 0x02	; 2
- 234:	80 93 64 00 	sts	0x0064, r24
+ 242:	82 e0       	ldi	r24, 0x02	; 2
+ 244:	80 93 64 00 	sts	0x0064, r24
       SET_USI_TO_SEND_DATA( );
- 238:	b8 9a       	sbi	0x17, 0	; 23
- 23a:	80 e7       	ldi	r24, 0x70	; 112
- 23c:	8e b9       	out	0x0e, r24	; 14
+ 248:	b8 9a       	sbi	0x17, 0	; 23
+ 24a:	80 e7       	ldi	r24, 0x70	; 112
+ 24c:	8e b9       	out	0x0e, r24	; 14
       break;
- 23e:	29 c0       	rjmp	.+82     	; 0x292 <__vector_14+0x12c>
+ 24e:	29 c0       	rjmp	.+82     	; 0x2a2 <__vector_14+0x12c>
         USIDR = txBuf[ txTail ];
       }
       else
       {
         // the buffer is empty
         SET_USI_TO_TWI_START_CONDITION_MODE( );
- 240:	88 ea       	ldi	r24, 0xA8	; 168
- 242:	8d b9       	out	0x0d, r24	; 13
- 244:	80 e7       	ldi	r24, 0x70	; 112
- 246:	8e b9       	out	0x0e, r24	; 14
+ 250:	88 ea       	ldi	r24, 0xA8	; 168
+ 252:	8d b9       	out	0x0d, r24	; 13
+ 254:	80 e7       	ldi	r24, 0x70	; 112
+ 256:	8e b9       	out	0x0e, r24	; 14
         return;
- 248:	24 c0       	rjmp	.+72     	; 0x292 <__vector_14+0x12c>
+ 258:	24 c0       	rjmp	.+72     	; 0x2a2 <__vector_14+0x12c>
       break;
 
     // set USI to sample reply from master
     // next USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA
     case USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA:
       overflowState = USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA;
- 24a:	83 e0       	ldi	r24, 0x03	; 3
- 24c:	80 93 64 00 	sts	0x0064, r24
+ 25a:	83 e0       	ldi	r24, 0x03	; 3
+ 25c:	80 93 64 00 	sts	0x0064, r24
       SET_USI_TO_READ_ACK( );
- 250:	b8 98       	cbi	0x17, 0	; 23
- 252:	1f b8       	out	0x0f, r1	; 15
- 254:	8e e7       	ldi	r24, 0x7E	; 126
- 256:	8e b9       	out	0x0e, r24	; 14
+ 260:	b8 98       	cbi	0x17, 0	; 23
+ 262:	1f b8       	out	0x0f, r1	; 15
+ 264:	8e e7       	ldi	r24, 0x7E	; 126
+ 266:	8e b9       	out	0x0e, r24	; 14
       break;
- 258:	1c c0       	rjmp	.+56     	; 0x292 <__vector_14+0x12c>
+ 268:	1c c0       	rjmp	.+56     	; 0x2a2 <__vector_14+0x12c>
 
     // Master read data mode: set USI to sample data from master, next
     // USI_SLAVE_GET_DATA_AND_SEND_ACK
     case USI_SLAVE_REQUEST_DATA:
       overflowState = USI_SLAVE_GET_DATA_AND_SEND_ACK;
- 25a:	85 e0       	ldi	r24, 0x05	; 5
- 25c:	80 93 64 00 	sts	0x0064, r24
+ 26a:	85 e0       	ldi	r24, 0x05	; 5
+ 26c:	80 93 64 00 	sts	0x0064, r24
       SET_USI_TO_READ_DATA( );
- 260:	b8 98       	cbi	0x17, 0	; 23
- 262:	80 e7       	ldi	r24, 0x70	; 112
- 264:	8e b9       	out	0x0e, r24	; 14
+ 270:	b8 98       	cbi	0x17, 0	; 23
+ 272:	80 e7       	ldi	r24, 0x70	; 112
+ 274:	8e b9       	out	0x0e, r24	; 14
       break;
- 266:	15 c0       	rjmp	.+42     	; 0x292 <__vector_14+0x12c>
+ 276:	15 c0       	rjmp	.+42     	; 0x2a2 <__vector_14+0x12c>
     // copy data from USIDR and send ACK
     // next USI_SLAVE_REQUEST_DATA
     case USI_SLAVE_GET_DATA_AND_SEND_ACK:
       // put data into buffer
       // Not necessary, but prevents warnings
       rxHead = ( rxHead + 1 ) & TWI_RX_BUFFER_MASK;
- 268:	80 91 63 00 	lds	r24, 0x0063
- 26c:	8f 5f       	subi	r24, 0xFF	; 255
- 26e:	8f 70       	andi	r24, 0x0F	; 15
- 270:	80 93 63 00 	sts	0x0063, r24
+ 278:	80 91 63 00 	lds	r24, 0x0063
+ 27c:	8f 5f       	subi	r24, 0xFF	; 255
+ 27e:	8f 70       	andi	r24, 0x0F	; 15
+ 280:	80 93 63 00 	sts	0x0063, r24
       rxBuf[ rxHead ] = USIDR;
- 274:	90 91 63 00 	lds	r25, 0x0063
- 278:	8f b1       	in	r24, 0x0f	; 15
- 27a:	e6 e7       	ldi	r30, 0x76	; 118
- 27c:	f0 e0       	ldi	r31, 0x00	; 0
- 27e:	e9 0f       	add	r30, r25
- 280:	f1 1d       	adc	r31, r1
- 282:	80 83       	st	Z, r24
+ 284:	90 91 63 00 	lds	r25, 0x0063
+ 288:	8f b1       	in	r24, 0x0f	; 15
+ 28a:	e6 e7       	ldi	r30, 0x76	; 118
+ 28c:	f0 e0       	ldi	r31, 0x00	; 0
+ 28e:	e9 0f       	add	r30, r25
+ 290:	f1 1d       	adc	r31, r1
+ 292:	80 83       	st	Z, r24
       // next USI_SLAVE_REQUEST_DATA
       overflowState = USI_SLAVE_REQUEST_DATA;
- 284:	84 e0       	ldi	r24, 0x04	; 4
- 286:	80 93 64 00 	sts	0x0064, r24
+ 294:	84 e0       	ldi	r24, 0x04	; 4
+ 296:	80 93 64 00 	sts	0x0064, r24
       SET_USI_TO_SEND_ACK( );
- 28a:	1f b8       	out	0x0f, r1	; 15
- 28c:	b8 9a       	sbi	0x17, 0	; 23
- 28e:	8e e7       	ldi	r24, 0x7E	; 126
- 290:	8e b9       	out	0x0e, r24	; 14
+ 29a:	1f b8       	out	0x0f, r1	; 15
+ 29c:	b8 9a       	sbi	0x17, 0	; 23
+ 29e:	8e e7       	ldi	r24, 0x7E	; 126
+ 2a0:	8e b9       	out	0x0e, r24	; 14
       break;
 
   } // end switch
 
 } // end ISR( USI_OVERFLOW_VECTOR )
- 292:	ff 91       	pop	r31
- 294:	ef 91       	pop	r30
- 296:	bf 91       	pop	r27
- 298:	af 91       	pop	r26
- 29a:	9f 91       	pop	r25
- 29c:	8f 91       	pop	r24
- 29e:	7f 91       	pop	r23
- 2a0:	6f 91       	pop	r22
- 2a2:	5f 91       	pop	r21
- 2a4:	4f 91       	pop	r20
- 2a6:	3f 91       	pop	r19
- 2a8:	2f 91       	pop	r18
- 2aa:	0f 90       	pop	r0
- 2ac:	0f be       	out	0x3f, r0	; 63
- 2ae:	0f 90       	pop	r0
- 2b0:	1f 90       	pop	r1
- 2b2:	18 95       	reti
+ 2a2:	ff 91       	pop	r31
+ 2a4:	ef 91       	pop	r30
+ 2a6:	bf 91       	pop	r27
+ 2a8:	af 91       	pop	r26
+ 2aa:	9f 91       	pop	r25
+ 2ac:	8f 91       	pop	r24
+ 2ae:	7f 91       	pop	r23
+ 2b0:	6f 91       	pop	r22
+ 2b2:	5f 91       	pop	r21
+ 2b4:	4f 91       	pop	r20
+ 2b6:	3f 91       	pop	r19
+ 2b8:	2f 91       	pop	r18
+ 2ba:	0f 90       	pop	r0
+ 2bc:	0f be       	out	0x3f, r0	; 63
+ 2be:	0f 90       	pop	r0
+ 2c0:	1f 90       	pop	r1
+ 2c2:	18 95       	reti
 
-000002b4 <_exit>:
- 2b4:	f8 94       	cli
+000002c4 <_exit>:
+ 2c4:	f8 94       	cli
 
-000002b6 <__stop_program>:
- 2b6:	ff cf       	rjmp	.-2      	; 0x2b6 <__stop_program>
+000002c6 <__stop_program>:
+ 2c6:	ff cf       	rjmp	.-2      	; 0x2c6 <__stop_program>
