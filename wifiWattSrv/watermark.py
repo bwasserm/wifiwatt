@@ -1,0 +1,45 @@
+# helpful class to make colors easier to work with
+class termColors:
+  def __init__(self):
+	 self.cancel	= "\x1b[0m"
+	 self.black	= "\x1b[30m"
+	 self.red	= "\x1b[31m"
+	 self.green	= "\x1b[32;1m"
+	 self.yellow	= "\x1b[33;1m"
+	 self.blue	= "\x1b[34m"
+	 self.magenta	= "\x1b[35m"
+	 self.cyan	= "\x1b[36m"
+	 self.white	= "\x1b[37m"
+
+
+printWatermark():
+	tc = termColors()
+
+	print(tc.red + "__" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "____" + tc.green + "/\\\\\\" + tc.red + "________" + tc.green + "/\\\\\\" + tc.red + "__" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "__" + tc.green + "/\\\\\\" + tc.red + "______________" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "_________" + tc.green + "/\\\\\\" + tc.red + "_____" + tc.green + "/\\\\\\\\\\\\\\\\\\" + tc.red + "____        " + tc.cancel);
+	print(tc.red + " _" + tc.green + "\\/\\\\\\/////////\\\\\\" + tc.red + "_" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_" + tc.green + "\\/////\\\\\\///" + tc.red + "__" + tc.green + "\\/\\\\\\" + tc.red + "_____________" + tc.green + "\\/\\\\\\////////\\\\\\" + tc.red + "___" + tc.green + "/\\\\\\\\\\\\\\" + tc.red + "___" + tc.green + "/\\\\\\///////\\\\\\" + tc.red + "__       " + tc.cancel);
+	print(tc.red + "  _" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____________" + tc.green + "\\/\\\\\\" + tc.red + "______" + tc.green + "\\//\\\\\\" + tc.red + "_" + tc.green + "\\/////\\\\\\" + tc.red + "__" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "__      " + tc.cancel);
+	print(tc.red + "   _" + tc.green + "\\/\\\\\\\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "__" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____________" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "__" + tc.green + "\\///\\\\\\\\\\\\\\\\\\/" + tc.red + "___     " + tc.cancel);
+	print(tc.red + "    _" + tc.green + "\\/\\\\\\/////////\\\\\\" + tc.red + "_" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____________" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "___" + tc.green + "/\\\\\\///////\\\\\\" + tc.red + "__    " + tc.cancel);
+	print(tc.red + "     _" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____________" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "__" + tc.green + "/\\\\\\" + tc.red + "______" + tc.green + "\\//\\\\\\" + tc.red + "_   " + tc.cancel);
+	print(tc.red + "      _" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "_" + tc.green + "\\//\\\\\\" + tc.red + "______" + tc.green + "/\\\\\\" + tc.red + "______" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____________" + tc.green + "\\/\\\\\\" + tc.red + "_______" + tc.green + "/\\\\\\" + tc.red + "______" + tc.green + "\\/\\\\\\" + tc.red + "_" + tc.green + "\\//\\\\\\" + tc.red + "______" + tc.green + "/\\\\\\" + tc.red + "__  " + tc.cancel);
+	print(tc.red + "       _" + tc.green + "\\/\\\\\\\\\\\\\\\\\\\\\\\\\\/" + tc.red + "__" + tc.green + "\\///\\\\\\\\\\\\\\\\\\\\/" + tc.red + "___" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "__" + tc.green + "\\/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "_" + tc.green + "\\/\\\\\\\\\\\\\\\\\\\\\\\\/" + tc.red + "______" + tc.green + "\\/\\\\\\" + tc.red + "__" + tc.green + "\\///\\\\\\\\\\\\\\\\\\/" + tc.red + "____ " + tc.cancel);
+	print(tc.red + "        _" + tc.green + "\\/////////////" + tc.red + "______" + tc.green + "\\//////////" + tc.red + "____" + tc.green + "\\///////////" + tc.red + "___" + tc.green + "\\///////////////" + tc.red + "__" + tc.green + "\\////////////" + tc.red + "________" + tc.green + "\\///" + tc.red + "____" + tc.green + "\\/////////" + tc.red + "_______" + tc.cancel);
+	print(tc.red + "         ________________________________________________________" + tc.green + "/\\\\\\\\\\\\\\\\\\" + tc.red + "_________" + tc.green + "/\\\\\\\\\\\\\\" + tc.red + "_________" + tc.green + "/\\\\\\" + tc.red + "_____" + tc.green + "/\\\\\\\\\\\\\\\\\\\\" + tc.red + "___          " + tc.cancel);
+	print(tc.red + "          ______________________________________________________" + tc.green + "/\\\\\\///////\\\\\\" + tc.red + "_____" + tc.green + "/\\\\\\/////\\\\\\" + tc.red + "___" + tc.green + "/\\\\\\\\\\\\\\" + tc.red + "___" + tc.green + "/\\\\\\///////\\\\\\" + tc.red + "__         " + tc.cancel);
+	print(tc.red + "           _____________________________________________________" + tc.green + "\\///" + tc.red + "_____" + tc.green + "\\//\\\\\\" + tc.red + "____" + tc.green + "/\\\\\\" + tc.red + "____" + tc.green + "\\//\\\\\\" + tc.red + "_" + tc.green + "\\/////\\\\\\" + tc.red + "__" + tc.green + "\\///" + tc.red + "_______" + tc.green + "/\\\\\\" + tc.red + "__        " + tc.cancel);
+	print(tc.red + "            _______________________________________________________________" + tc.green + "/\\\\\\/" + tc.red + "___" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "__________" + tc.green + "/\\\\\\//" + tc.red + "___       " + tc.cancel);
+	print(tc.red + "             ____________________________________________________________" + tc.green + "/\\\\\\//" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_________" + tc.green + "\\////\\\\\\" + tc.red + "__      " + tc.cancel);
+	print(tc.red + "              _________________________________________________________" + tc.green + "/\\\\\\//" + tc.red + "________" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "_____" + tc.green + "\\/\\\\\\" + tc.red + "___________" + tc.green + "\\//\\\\\\" + tc.red + "__     " + tc.cancel);
+	print(tc.red + "               _______________________________________________________" + tc.green + "/\\\\\\/" + tc.red + "___________" + tc.green + "\\//\\\\\\" + tc.red + "____" + tc.green + "/\\\\\\" + tc.red + "______" + tc.green + "\\/\\\\\\" + tc.red + "___" + tc.green + "/\\\\\\" + tc.red + "______" + tc.green + "/\\\\\\" + tc.red + "__    " + tc.cancel);
+	print(tc.red + "                ______________________________________________________" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "__" + tc.green + "\\///\\\\\\\\\\\\\\/" + tc.red + "_______" + tc.green + "\\/\\\\\\" + tc.red + "__" + tc.green + "\\///\\\\\\\\\\\\\\\\\\/" + tc.red + "___   " + tc.cancel);
+	print(tc.red + "                 _____________________________________________________" + tc.green + "\\///////////////" + tc.red + "_____" + tc.green + "\\///////" + tc.red + "_________" + tc.green + "\\///" + tc.red + "_____" + tc.green + "\\/////////" + tc.red + "_____  " + tc.cancel);
+	print(tc.red + "                  ___________________________________________________________________________________________________________________" + tc.cancel);
+	print(tc.red + "                   ___________________________________________________________________________________________________________________" + tc.cancel);
+	print(tc.red + "                    ___________________________" + tc.yellow + "     _       _   ____  _   _        __   _____ _____  " + tc.red + "__________________________________" + tc.cancel);
+	print(tc.red + "                     ___________________________" + tc.yellow + "   \\ \\    /| | | |_  | | \\ \\    / / /\\   | |   | |    " + tc.red + "__________________________________" + tc.cancel);
+	print(tc.red + "                      ___________________________" + tc.yellow + "   \\_\\/\\/ |_| |_|   |_|  \\_\\/\\/ /_/--\\  |_|   |_|     " + tc.red + "__________________________________" + tc.cancel);
+	print(tc.red + "                       ___________________________________________________________________________________________________________________" + tc.cancel);
+	print(tc.red + "                        ___________________________________________________________________________________________________________________" + tc.cancel);
+
+if(__name__ == "__main__"):
+	printWatermark()
