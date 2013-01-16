@@ -17,7 +17,7 @@ int main(void)
 {
 	// Setup variables
 	uint8_t count = 0;
-	uint16_t adc_val = 0;
+	uint8_t adc_val = 0; // Change to uint16_t to use 10 bits of ADC data
 	uint16_t led_counter = 0;
 	
 	// Setup AVR
@@ -26,7 +26,7 @@ int main(void)
 	// Setup ADC
 	// Set ADC Mux
 	ADMUX = (0<<REFS2)|(0<<REFS1)|(0<<REFS0)|	// Use VCC as Vref, disconnected from AREF pin (which is in use as SDA for TWI)
-			(0<<ADLAR)|							// Don't left-shift the ADC result, so the first 8 bits can be read from a single register (ADCH)
+			(1<<ADLAR)|							// Left-shift the ADC result, so the first 8 bits can be read from a single register (ADCH)
 //			(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0);	// Use difference between PB4 and PB3, with gain of 1x. Use 0111 for 20x gain
 			(0<<MUX3)|(0<<MUX2)|(1<<MUX1)|(0<<MUX0);	// Read ADC2 (PB4)
 	// Set ADC Control Register A
@@ -54,7 +54,8 @@ int main(void)
     while(1)
     {
         // Read ADC
-		adc_val = ADCH << 8 | ADCL;
+//		adc_val = ADCH << 8 | ADCL;	// Removed to only send one byte
+		adc_val = ADCH;
 		ADCSRA = ADCSRA | (1<<ADSC);		// Re-enable for next conversion to happen
 		
 		// Calculate RMS
@@ -70,7 +71,7 @@ int main(void)
 		*/
 		if(usiTwiDataInTransmitBuffer() == false){
 			// Transmit ADC value
-			usiTwiTransmitByte((uint8_t)(adc_val >> 8));
+//			usiTwiTransmitByte((uint8_t)(adc_val >> 8)); // Removed to only send one byte
 			usiTwiTransmitByte((uint8_t)adc_val);
 			count++;
 		}
