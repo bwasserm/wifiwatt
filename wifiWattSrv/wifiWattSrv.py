@@ -15,8 +15,9 @@ import pika
 from pika.adapters.tornado_connection import TornadoConnection
 from tornado.options import define, options
 import wifiWattRabbitConfig
+import wifiWattNode
 
-
+# some global helpers
 define("port", default=8080, help="run on the given port", type=int)
 
 LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
@@ -24,16 +25,19 @@ LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
 LOGGER = logging.getLogger(__name__)
 
 rc = wifiWattRabbitConfig.generateRabbitObjs(socket.gethostname())
+# / global helpers
+
 
 
 class Application(tornado.web.Application):
   def __init__(self):
+    # setup tornado app
     handlers = [
       (r"/", MainHandler),
     ]
     settings = dict(
       cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__",
-      login_url="/auth/login",
+      # login_url="/auth/login",
       template_path=os.path.join(os.path.dirname(__file__), "templates"),
       static_path=os.path.join(os.path.dirname(__file__), "static"),
       xsrf_cookies=True,
@@ -41,11 +45,22 @@ class Application(tornado.web.Application):
     )
     tornado.web.Application.__init__(self, handlers, **settings)
 
+    # application data structures
+    self.nodes = dict()
+# / class Application
+
+
+
+
 class MainHandler(tornado.web.RequestHandler):
   def get(self):
     self.render("index.html")
+# / class MainHandler
 
-class ExamplePublisher(object):
+
+
+
+class RabbitClient(object):
   """This is an example publisher that will handle unexpected interactions
   with RabbitMQ such as channel and connection closures.
 
@@ -209,10 +224,21 @@ class ExamplePublisher(object):
     :param pika.Spec.BasicProperties: properties
     :param str|unicode body: The message body
     """
-    LOGGER.info('Got new value "%s" from hostname <%s>', body, prop.headers["hostname"])
+    hostname = prop.headers["hostname"]
+    value = float(body)
+    LOGGER.info('Got new value "%d" from hostname <%s>.', value, hostname)
+    if hostname in app.nodes:
+      newDP = wwDataPoint(time.time(), value)
+      app.nodes[hostname].append(newDP, None, None, None) # todo: callbacks
+    else:
+      LOGGER.error('No node with hostname <%s>!', hostname)
+
 
   def initNodeHandler(self, channel, basicDeliver, prop, body):
-    LOGGER.info('Got new node @ hostname: %s', msg)
+    hostname = body
+    LOGGER.info('Initing new node @ hostname: %s', hostname)
+    newNode = wifiWattNode.wifiWattNode(hostname)
+    app.nodes.update(hostname, newNode)
 
   def serverCmdHandler(self, channel, basicDeliver, prop, body):
     LOGGER.info('Got new command: %s', msg)
@@ -313,10 +339,10 @@ def main():
   app = Application()
   ioloop = tornado.ioloop.IOLoop.instance()
 
-  app.pika = ExamplePublisher(app, ioloop)
+  app.rabbit = RabbitClient(app, ioloop)
   app.listen(options.port)
   
-  ioloop.add_timeout(500, app.pika.connect)
+  ioloop.add_timeout(500, app.rabbit.connect)
   ioloop.start()
 
 if __name__ == "__main__":
