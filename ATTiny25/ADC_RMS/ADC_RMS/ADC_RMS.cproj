@@ -48,7 +48,7 @@
       </OverrideVtorValue>
       <Channel>
         <host>127.0.0.1</host>
-        <port>54706</port>
+        <port>53059</port>
         <ssl>False</ssl>
       </Channel>
       <ToolOptions>
