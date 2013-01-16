@@ -49,13 +49,21 @@ int main(int argc, char **argv)
 
   INP_GPIO(RELAY_NUM);
   OUT_GPIO(RELAY_NUM);
+  INP_GPIO(7);
+  OUT_GPIO(7);
+  
+  
   for(rep=0; rep<100; )
   {
+    printf("Loop\n");
     GPIO_SET = 1 << RELAY_NUM;
+    GPIO_SET = 1 << 7;
     sleep(1);
     GPIO_CLR = 1 << RELAY_NUM;
+    GPIO_CLR = 1 << 7;
     sleep(1);
   }
+
   return 0;
 /*
   // Set GPIO pins 7-11 to output
@@ -80,7 +88,7 @@ int main(int argc, char **argv)
   return 0;
 }
 */
-
+  }
 //
 // Set up memory regions to access GPIO
 //
@@ -112,4 +120,5 @@ void setup_io()
 
   // Always use volatile pointer!
   gpio = (volatile unsigned *)gpio_map;    
+
 } // setup_io
