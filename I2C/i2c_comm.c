@@ -53,13 +53,16 @@ int16_t get_ADC(int fd){
 }
 
 // Get a 1 byte value from the ADC
-uint8_t get_ADC_byte(int fd){
+int16_t get_ADC_byte(int fd){
     uint8_t byte = 0;
 
     // Using I2C read
-    read(fd, &byte, 1);
+    if(read(fd, &byte, 1) != 1)
+    {
+      return -1;
+    }
 
-    return byte;
+    return (int16_t)((uint16_t)byte);
 }
 
 int main(){
@@ -74,7 +77,7 @@ int main(){
 
     while(1){
       // Read in 2 bytes
-      data = get_ADC(fd);
+      data = get_ADC_byte(fd);
 
       // Check for sync errors
       h_byte = (uint8_t)(data >> 8);
