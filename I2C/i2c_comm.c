@@ -53,20 +53,16 @@ int16_t get_ADC(int fd){
 }
 
 // Get a 1 byte value from the ADC
-int16_t get_ADC_byte(int fd){
+uint8_t get_ADC_byte(int fd){
     uint8_t byte = 0;
 
     // Using I2C read
-    if(read(fd, &byte, 1) != 1)
-    {
-      return -1;
-    }
-
-    return (int16_t)((uint16_t)byte);
+    read(fd, &byte, 1);
+    return byte;
 }
 
 int main(){
-    int16_t data;
+    uint8_t data;
     uint8_t h_byte = 0;
     uint8_t l_byte = 0;
     int fd;
@@ -79,7 +75,7 @@ int main(){
       // Read in 2 bytes
       data = get_ADC_byte(fd);
 
-      // Check for sync errors
+/*      // Check for sync errors
       h_byte = (uint8_t)(data >> 8);
       l_byte = (uint8_t)(data);
 
@@ -98,7 +94,8 @@ int main(){
           l_byte = get_ADC_byte(fd);
         }
       }
-      printf("Data: %d\n", data);
+*/
+      printf("Data: %d\t%x\n", data, data);
 
 /*
 ** The sync code doesn't support error codes. The AVR doesn't send them anyways
