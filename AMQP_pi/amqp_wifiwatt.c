@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <unistd.h>
 #include <stdint.h>
 #include <amqp.h>
 #include <amqp_framing.h>
@@ -15,8 +15,8 @@
 #define PORT              5672
 #define EXCH_VALUE_NAME   "ww.valueUpdate"
 #define EXCH_MESS_NAME    "ww.messages"
-#define EXCH_VALUE_TYPE   "amq.fanout"
-#define EXCH_MESS_TYPE    "amq.topic"
+#define EXCH_VALUE_TYPE   "fanout"
+#define EXCH_MESS_TYPE    "topic"
 #define QUEUE_HAND_NAME   "node." PI ".handshake"
 #define QUEUE_CMD_NAME    "node." PI ".cmd"
 #define ROUTE_HAND_NAME   QUEUE_HAND_NAME
@@ -30,27 +30,26 @@
 #define ADC_RES           300
 
 // Global variables for names of things used in multiple functions
-const amqp_bytes_t queue_hand_name;
-const amqp_bytes_t queue_cmd_name;
-const amqp_bytes_t exch_value_name;
-const amqp_bytes_t exch_mess_name;
-const amqp_bytes_t exch_value_type;
-const amqp_bytes_t exch_mess_type;
-const amqp_bytes_t route_hand_name;
-const amqp_bytes_t route_cmd_name;
+amqp_bytes_t queue_hand_name;
+amqp_bytes_t queue_cmd_name;
+amqp_bytes_t exch_value_name;
+amqp_bytes_t exch_mess_name;
+amqp_bytes_t exch_value_type;
+amqp_bytes_t exch_mess_type;
+amqp_bytes_t route_hand_name;
+amqp_bytes_t route_cmd_name;
 
-size_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len);
+ssize_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len);
 int perform_handshake(amqp_connection_state_t conn);
-amqp_connection_state_t connect_server();
+amqp_connection_state_t connect_server(void);
 
-int main(int argc, char const * const *argv) {
+int main(void) {
   char buf[BUF_LEN];
-  size_t mes_len;
-  int sockfd;
+  ssize_t mes_len;
   amqp_connection_state_t conn;
-  amqp_frame_t frame;
 
   // Set global strings 
+  queue_hand_name = amqp_cstring_bytes(QUEUE_HAND_NAME);
   queue_cmd_name = amqp_cstring_bytes(QUEUE_CMD_NAME);
   exch_value_name = amqp_cstring_bytes(EXCH_VALUE_NAME);
   exch_mess_name = amqp_cstring_bytes(EXCH_MESS_NAME);
@@ -60,7 +59,9 @@ int main(int argc, char const * const *argv) {
   route_cmd_name = amqp_cstring_bytes(ROUTE_CMD_NAME);
 
   conn = connect_server();
+  printf("Finish connect\n");
   perform_handshake(conn);
+  printf("Finish handshake\n");
 
   if(fork() == 0){  // Child process
     uint8_t val;
@@ -74,7 +75,7 @@ int main(int argc, char const * const *argv) {
 
       // Publish values to server
       die_on_error(amqp_basic_publish(conn, 1, exch_value_name, 
-        amqp_empty_bytes, 0, 0, NULL, buf), "Publishing");
+        amqp_empty_bytes, 0, 0, NULL, amqp_cstring_bytes(buf)), "Publishing");
 
       microsleep(2000);
     }
@@ -82,14 +83,14 @@ int main(int argc, char const * const *argv) {
 
   if(fork() == 0){  // Child process
     // Consume cmd queue
-    amqp_basic_consume(conn, 1, queue_cmd_name, amqp_empty_bytes, 0, 0, 0, 
+    amqp_basic_consume(conn, 1, queue_cmd_name, amqp_empty_bytes, 0, 1, 0, 
       amqp_empty_table);
-    die_on_amqp_error(amqp_get_rpc_reply(conn), "Consuming cmd queue");
+    die_on_amqp_error(amqp_get_rpc_reply(conn), "consuming cmd queue");
 
     while(1){
       amqp_frame_t frame;
 
-      die_amap_error(amqp_simple_wait_frame(conn, &frame), 
+      die_on_error(amqp_simple_wait_frame(conn, &frame), 
         "waiting for header frame");
 
       if(frame.frame_type != AMQP_FRAME_METHOD || 
@@ -120,6 +121,7 @@ int main(int argc, char const * const *argv) {
 
 
 amqp_connection_state_t connect_server(){
+  int sockfd;
   amqp_connection_state_t conn = amqp_new_connection();
 
   // Open socket and set fd
@@ -147,7 +149,7 @@ amqp_connection_state_t connect_server(){
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Declaring value exchange");
 
   // Declare messages exchange
-  amqp_exchange_declare(conn, 1, exch_mess_name, exch_exchange_type, 0, 0, amqp_empty_table);
+  amqp_exchange_declare(conn, 1, exch_mess_name, exch_mess_type, 0, 0, amqp_empty_table);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Declaring messages exchange");
 
   // Bind handshake queue to messages exchange
@@ -162,30 +164,52 @@ amqp_connection_state_t connect_server(){
 }
 
 int perform_handshake(amqp_connection_state_t conn){
+  ssize_t mes_len;
+  char buf[BUF_LEN];
+  amqp_frame_t frame;
+
   // Publish handshake to server
   die_on_error(amqp_basic_publish(conn, 1, exch_mess_name, amqp_empty_bytes, 0, 
     0, NULL, amqp_cstring_bytes(HANDSHAKE_STR)), "Publishing handshake");
+  printf("publish message\n");
 
-  amqp_rpc_reply_t r;
+  /* Original code - didn't seem to work correctly
+  die_on_amqp_error(amqp_basic_get(conn, 1, queue_hand_name, 1), "Get handshake.");
+  printf("get message\n");
 
-  r = amqp_basic_get(conn, 1, queue_hand_name, 1);
-  die_rpc(r, "basic.get");
-
-  if(r.reply.id == AMQP_BASIC_GET_EMPTY_METHOD){
-    printf("Error: Handshake empty method");
+  if((mes_len = get_body(conn, buf, BUF_LEN)) < 0){
+    exit(1);
   }
+  printf("get body\n");
+
+  //TODO act on message
+  printf("Handshake: %.*s\n", mes_len, buf);
+  */
+
+  amqp_basic_consume(conn, 1, queue_hand_name, amqp_empty_bytes, 0, 1, 0, 
+    amqp_empty_table);
+  die_on_amqp_error(amqp_get_rpc_reply(conn), "consuming cmd queue");
+
+  die_on_error(amqp_simple_wait_frame(conn, &frame), 
+    "waiting for header frame");
+
+  if(frame.frame_type != AMQP_FRAME_METHOD || 
+      frame.payload.method.id != AMQP_BASIC_DELIVER_METHOD)
+    printf("Error: handshake wrong frame or method\n");
 
   if((mes_len = get_body(conn, buf, BUF_LEN)) < 0){
     exit(1);
   }
 
-  //TODO act on message
+  // TODO implement command
   printf("Handshake: %.*s\n", mes_len, buf);
+
+  amqp_maybe_release_buffers(conn);
 
   return 0;
 }
 
-size_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len){
+ssize_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len){
   size_t body_remaining, body_size;
   amqp_frame_t frame;
 
@@ -227,11 +251,11 @@ size_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len){
       return -1;
     }
 
-    memcpy(buf, frame.payload.body_fragment, frame.payload.body_fragment.len);
+    memcpy(buf, frame.payload.body_fragment.bytes, frame.payload.body_fragment.len);
 
     buf_len -= frame.payload.body_fragment.len;
     body_remaining -= frame.payload.body_fragment.len;
   }
 
-  return body_size;
+  return (ssize_t)body_size;
 }
