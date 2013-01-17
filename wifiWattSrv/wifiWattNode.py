@@ -119,6 +119,11 @@ class wifiWattNode(object):
   def delSubscription(self, name, type):
     self.subs[type].remove(name)
 
+  def powerOn(self):
+    pass
+
+  def powerOff(self):
+    pass
 
   def recallHistory(self, type):
     """
