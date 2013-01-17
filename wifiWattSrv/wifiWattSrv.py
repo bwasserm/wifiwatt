@@ -25,11 +25,16 @@ LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
 LOGGER = logging.getLogger(__name__)
 
 rc = wifiWattRabbitConfig.generateRabbitObjs(socket.gethostname())
+
+prefMsgRate = 0.2 # (s)
 # / global helpers
 
 
 
 class Application(tornado.web.Application):
+
+  # TODO: think about having a timeout to zero-fill the data for disconnected nodes
+
   def __init__(self):
     # setup tornado app
     handlers = [
@@ -46,7 +51,7 @@ class Application(tornado.web.Application):
     tornado.web.Application.__init__(self, handlers, **settings)
 
     # application data structures
-    self.nodes = dict()
+    self.nodes = dict() # dict of hostname=wifiWattNode(object)
 # / class Application
 
 
@@ -196,7 +201,8 @@ class RabbitClient(object):
   def setupMsgRouting(self):
     # map the message queues we defined to our handlers
     LOGGER.info('Mapping handlers...')
-    self._channel.basic_consume(self.valueHandler, rc.valueQueAttr["queue"])
+    self._channel.basic_consume(self.valueHandler, rc.valueQueAttr["queue"],
+      no_ack=True)
     self._channel.basic_consume(self.initNodeHandler,
       rc.handshakeQueAttr["queue"])
     self._channel.basic_consume(self.serverCmdHandler, rc.cmdQueAttr["queue"])
@@ -224,21 +230,46 @@ class RabbitClient(object):
     :param pika.Spec.BasicProperties: properties
     :param str|unicode body: The message body
     """
-    hostname = prop.headers["hostname"]
+    # attempt to read message header info
+    if "hostname" in prop.headers:
+      hostname = prop.headers["hostname"]
+    else:
+      LOGGER.error('Couldn\'t read hostname from message!')
+      return -1
+    # parse the message 
     value = float(body)
-    LOGGER.info('Got new value "%d" from hostname <%s>.', value, hostname)
-    if hostname in app.nodes:
-      newDP = wwDataPoint(time.time(), value)
-      app.nodes[hostname].append(newDP, None, None, None) # todo: callbacks
+    LOGGER.info('Got new value "%f" from hostname <%s>.', value, hostname)
+    # if we've inited this node, call it's append method
+    if hostname in self.app.nodes:
+      newDP = wifiWattNode.wwDataPoint(value, time.time())
+      self.app.nodes[hostname].appendData(newDP, None, None, None) # todo: callbacks
     else:
       LOGGER.error('No node with hostname <%s>!', hostname)
 
 
   def initNodeHandler(self, channel, basicDeliver, prop, body):
+    """
+    Initialize the data stores for a node on the server. Works as a callback for
+    a new message to the server handshake queue.
+    """
+    # parse the hostname from handshake message
     hostname = body
-    LOGGER.info('Initing new node @ hostname: %s', hostname)
-    newNode = wifiWattNode.wifiWattNode(hostname)
-    app.nodes.update(hostname, newNode)
+    nodes = self.app.nodes
+    # check if we already have structures for this node
+    if(hostname in nodes):
+      # we have it already. do we want to update here?
+      LOGGER.info('Got handshake for node <%s>; already exists.', hostname)
+    else:
+      # make a new node instance
+      LOGGER.info('Initing new node for hostname: %s', hostname)
+      newNode = wifiWattNode.wifiWattNode(hostname)
+      nodes[hostname] = newNode
+    # send back the prefered message rate to start value stream
+    self.basic_publish(
+      rc.msgExngAttr["exchange"],
+      "node.{0}.handshake".format(hostname),
+      str(prefMsgRate)
+    )
 
   def serverCmdHandler(self, channel, basicDeliver, prop, body):
     LOGGER.info('Got new command: %s', msg)

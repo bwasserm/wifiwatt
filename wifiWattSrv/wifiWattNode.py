@@ -1,4 +1,4 @@
-
+import time
 
 # 10MB per node = 10485760bytes
 
@@ -12,7 +12,8 @@
 
 class ringBuffer(object):
   def __init__(self, size):
-    self.data = [0 for i in xrange(size)]
+    nullDP = wwDataPoint(0, time.time())
+    self.data = [nullDP for i in xrange(size)]
     self.size = size
 
   def append(self, x):
@@ -25,6 +26,7 @@ class ringBuffer(object):
 
   def getLast(self):
     # return the most recently appended element
+    print(repr(self.data[-1]))
     return self.data[-1]
 
 class wwDataPoint(object):
@@ -33,7 +35,7 @@ class wwDataPoint(object):
   timestamp: unix timestamp in sec as float
   data: current reading at timestamp
   """
-  def __init__(self, timestamp, data):
+  def __init__(self, data, timestamp=time.time()):
     self.timestamp = timestamp
     self.data = data
 
@@ -71,14 +73,18 @@ class wifiWattNode(object):
 
   def __checkDayThresh(self, newDP):
     # return True if we're close to 5s or over (>4.8s)
-    oldTime = self.daybuf.getLast().timestamp
+    rawr = self.daybuf.getLast()
+    oldTime = rawr.timestamp
     newTime = newDP.timestamp
     return (oldTime + 4.800) < newTime
 
   def __checkHourThresh(self, newDP):
     # return True if we're close to .2s or over (>.15s)
-    oldTime = self.hourbuf.getLast().timestamp
+    rawr = self.hourbuf.getLast()
+    oldTime = rawr.timestamp
     newTime = newDP.timestamp
+    print(oldTime)
+    print(newTime)
     return (oldTime + 0.150) < newTime
 
   def appendData(self, newDP, statusCallback = None, hourCallback = None,
@@ -89,12 +95,16 @@ class wifiWattNode(object):
     newDP: wwDataPoint
     """
     # given a wwDataPoint, add it to the necessary lists
-    if(self.__checkHourThresh()):
+    if(self.__checkHourThresh(newDP)):
+      print("added new hour buf data")
+      # print(repr(self.hourbuf.getBuf()))
       self.hourbuf.append(newDP)
       # then, fire optional callbacks to push data to browser
-      statusCallback(newDP)
-      hourCallback(newDP)
-    if(self.__checkDayThresh()):
+      if(statusCallback != None):
+        statususCallback(newDP)
+      if(hourCallback != None):
+        hourCallback(newDP)
+    if(self.__checkDayThresh(newDP)):
       self.daybuf.append(newDP)
 
 
