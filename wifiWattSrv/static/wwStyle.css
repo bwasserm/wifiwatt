@@ -3,6 +3,7 @@ body {
 }
 
 #console {
+  display: none; /* dev only */
   position: absolute;
   overflow: auto;
   left: 50%;
@@ -15,4 +16,12 @@ body {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(128, 128, 128, 0.6);
   border-bottom: 0px;
+}
+
+div.nodeContainer {
+  border-left: 5px solid #cccccc;
+  background: rgba(0, 0, 0, 0.85);
+  margin: 10px;
+  padding: 10px;
+  color: #FFFFFF;
 }

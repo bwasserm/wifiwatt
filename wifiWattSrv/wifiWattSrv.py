@@ -72,6 +72,7 @@ class Application(tornado.web.Application):
 
     # application data structures
     self.nodes = dict() # dict of hostname=wifiWattNode(object)
+    self.webClients = set()
 # / class Application
 
 
@@ -92,16 +93,21 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
   ## Connection Setup ##########################################################
   def on_open(self, info):
     self.app = tornadoApp
+    self.app.webClients = self.webClients
     # add to client pool
     self.webClients.add(self)
-    # inform the webclient of known nodes
-    nodesList = self.app.nodes.keys()
-    if(len(nodesList) > 0):
-      msgPayload = dict(nodes=nodesList)
-      self.sendJson("newNodes", msgPayload)
-    # subscribe to status of all existing nodes
-    for nodeHostname, nodeObj in self.app.nodes.iteritems():
-      nodeObj.newSubscription(self, "status")
+    # inform/subscript the webclient of/to known nodes with newNode callback
+    for (nodeName, nodeObj) in self.app.nodes.iteritems():
+      self.newNodeCb(nodeObj)
+
+
+    # nodesList = self.app.nodes.keys()
+    # if(len(nodesList) > 0):
+    #   msgPayload = dict(nodes=nodesList)
+    #   self.sendJson("newNodes", msgPayload)
+    # # subscribe to status of all existing nodes
+    # for nodeHostname, nodeObj in self.app.nodes.iteritems():
+    #   nodeObj.newSubscription(self, "status")
     # TODO: when a new person subscribes, should we send them data or wait for request?
 
   def on_close(self):
@@ -119,13 +125,15 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
     msgType(string): message type key
     payload(dict): data of the message; msgType is appended
     """
-    msgDict = copy.deepcopy(payload)
+    # msgDict = copy.deepcopy(payload)
+    msgDict = payload # we're always given a temp dict anyways
     msgDict["type"] = msgType
     msgString = json.dumps(msgDict)
     self.send(msgString)
 
   def on_message(self, msg):
     # attempt to unpack message and check integrity
+    LOGGER.info("new message: %s", msg)
     try:
       msgJson = json.loads(msg)
     except:
@@ -137,18 +145,16 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
     msgType = msgJson["type"]
     # dispatch to correct handler
     if(msgType == "subscription"):
-      self.subscriptionHandler(msg)
+      self.subscriptionHandler(msgJson)
     elif(msgType == "delSubscription"):
-      self.delSubscriptionHandler(msg)
-    elif(msgType == "nodeOn"):
-      self.nodeOnHandler(msg)
-    elif(msgType == "nodeOff"):
-      self.nodeOffHandler(msg)
+      self.delSubscriptionHandler(msgJson)
+    elif(msgType == "nodePower"):
+      self.nodePwrHandler(msgJson)
     else:
       LOGGER.error('Couldn\'t handle message type from client %s', repr(self))
 
   ## Handlers (deal with requests from browser) ################################
-  def subscriptionHandler(self, msg):
+  def subscriptionHandler(self, msgJson):
     # check for malformed message
     if("hostname" not in msgJson):
       LOGGER.error('No hostname in sub request from %s!', repr(self))
@@ -165,7 +171,7 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
     self.app.nodes[hostname].newSubscription(self, msgJson["subType"])
 
 
-  def delSubscriptionHandler(msg):
+  def delSubscriptionHandler(self, msgJson):
     # check for malformed message
     if("hostname" not in msgJson):
       LOGGER.error('No hostname in delSub request from %s!', repr(self))
@@ -181,29 +187,19 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
       return -1
     self.app.nodes[hostname].delSubscription(self, msgJson["subType"])
 
-  def nodeOnHandler(msg):
+  def nodePwrHandler(self, msgJson):
     # check for malformed message
-    if("hostname" not in msgJson):
-      LOGGER.error('No hostname in powerOn request from %s!', repr(self))
+    if("nodeName" not in msgJson):
+      LOGGER.error('No nodeName in power request from %s!', repr(self))
       return -1
     # try to grant power on
-    hostname = msgJson["hostname"]
-    if(hostname not in self.app.nodes):
-      LOGGER.error('PowerOn request for mystery hostname from %s!', repr(self))
+    nodeName = msgJson["nodeName"]
+    if(nodeName not in self.app.nodes):
+      LOGGER.error('Power request for mystery nodeName from %s!', repr(self))
       return -1
-    self.app.nodes[hostname].powerOn() 
-
-  def nodeOffHandler(msg):
-    # check for malformed message
-    if("hostname" not in msgJson):
-      LOGGER.error('No hostname in powerOff request from %s!', repr(self))
-      return -1
-    # try to grant power on
-    hostname = msgJson["hostname"]
-    if(hostname not in self.app.nodes):
-      LOGGER.error('PowerOff request for mystery hostname from %s!', repr(self))
-      return -1
-    self.app.nodes[hostname].powerOff()
+    self.app.nodes[nodeName].powerSet(msgJson["pwrVal"])
+    # send rabbit cmd
+    self.app.rabbit.sendNodeCtrlMsg(nodeName, 1 if msgJson["pwrVal"] else 0) 
 
 # todo: make the new data callbacks go to all sockjs connections
 
@@ -232,6 +228,13 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
       subType = "day"
     )
     self.sendJson("newData", msg)
+
+  def newNodeCb(self, nodeObj):
+    # send back a list of new nodes (only 1 in this case)
+    msgPayload = dict( nodes = [nodeObj.hostname] )
+    self.sendJson("newNodes", msgPayload)
+    # subscribe user to this node's status
+    nodeObj.newSubscription(self, "status")
 
 
   
@@ -315,6 +318,13 @@ class RabbitClient(object):
     self.add_on_channel_close_callback()
     self.setupExngsQueues()
 
+  def sendNodeCtrlMsg(self, nodeHostname, ctrlCode):
+    self._channel.basic_publish(
+      rc.msgExngAttr["exchange"],
+      "node.{0}.cmd".format(nodeHostname),
+      str(ctrlCode)
+    )
+
   ## Message Route Init ########################################################
 
   def setupExngsQueues(self):
@@ -388,22 +398,40 @@ class RabbitClient(object):
     :param pika.Spec.BasicProperties: properties
     :param str|unicode body: The message body
     """
-    # attempt to read message header info
-    if "hostname" in prop.headers:
-      hostname = prop.headers["hostname"]
-    else:
-      LOGGER.error('Couldn\'t read hostname from message!')
+    # attempt to parse message and check fields
+    try:
+      msgData = json.loads(body)
+    except:
+      LOGGER.error("Couldn't parse message. Malformed.")
       return -1
-    # parse the message 
-    value = float(body)
-    LOGGER.info('Got new value "%f" from hostname <%s>.', value, hostname)
+    if(("hostname" not in msgData)
+      or ("current" not in msgData)
+      or ("relayState" not in msgData)):
+      LOGGER.error("Couldn't parse message. Mising fields.")
+      return -1
+    hostname = msgData["hostname"]
+    value = float(msgData["current"])
+    relayState = bool(int(msgData["relayState"]))
+    LOGGER.info("Raw: %s Parsed: %d", msgData["relayState"], int(relayState))
+
     # if we've inited this node, call it's append method
     if hostname in self.app.nodes:
       nodeObj = self.app.nodes[hostname]
       newDP = wifiWattNode.wwDataPoint(value, time.time())
-      nodeObj.appendData(newDP)
+      nodeObj.appendData(newDP, relayState)
     else:
       LOGGER.error('No node with hostname <%s>!', hostname)
+
+    # attempt to read message header info
+    # if "hostname" in prop.headers:
+    #   hostname = prop.headers["hostname"]
+    # else:
+    #   LOGGER.error('Couldn\'t read hostname from message!')
+    #   return -1
+    # # parse the message 
+    # value = float(body)
+    # LOGGER.info('Got new value "%f" from hostname <%s>.', value, hostname)
+    
 
 
   def initNodeHandler(self, channel, basicDeliver, prop, body):
@@ -416,7 +444,7 @@ class RabbitClient(object):
     nodes = self.app.nodes
     # check if we already have structures for this node
     if(hostname in nodes):
-      # we have it already. do we want to update here?
+      # we have it already
       LOGGER.info('Got handshake for node <%s>; already exists.', hostname)
     else:
       # make a new node instance
@@ -429,6 +457,9 @@ class RabbitClient(object):
       "node.{0}.handshake".format(hostname),
       str(prefMsgRate)
     )
+    # notify all our webclients that we have a new node
+    for webClient in self.app.webClients:
+      webClient.newNodeCb(newNode)
 
   def serverCmdHandler(self, channel, basicDeliver, prop, body):
     LOGGER.info('Got new command: %s', msg)

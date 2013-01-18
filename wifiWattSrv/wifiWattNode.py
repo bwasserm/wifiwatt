@@ -90,7 +90,7 @@ class wifiWattNode(object):
     print(newTime)
     return (oldTime + 0.150) < newTime
 
-  def appendData(self, newDP):
+  def appendData(self, newDP, relayState):
     """
     take a new wwDataPoint, update the buffers, and fire the appropriate
     callbacks to send data to browsers
@@ -102,9 +102,12 @@ class wifiWattNode(object):
       # print("added new hour buf data")
       self.hourbuf.append(newDP)
 
+      # update relayState
+      self.relayOn = relayState
+
       # then, push this data to all subscribed connections
       for conn in self.subs["status"]:
-        conn.statusCb( [newDP.dictRepr], self.hostname, self.relayOn)
+        conn.statusCb( [newDP.dictRepr()], self.hostname, self.relayOn)
       for conn in self.subs["hour"]:
         conn.hourCb( [newDP.dictRepr()], self.hostname)
 
@@ -134,22 +137,20 @@ class wifiWattNode(object):
       sockjsConn.statusCb([self.hourbuf.getLast().dictRepr()], self.hostname,self.relayOn);
     elif(type == "hour"):
       # assemble the old data, then push back
-      oldData = recallHistory(self.hourbuf)
+      oldData = self.recallHistory(self.hourbuf)
       sockjsConn.hourCb(oldData, self.hostname)
     elif(type == "day"):
       # assemble the old data, then push back
-      oldData = recallHistory(self.daybuf)
+      oldData = self.recallHistory(self.daybuf)
       sockjsConn.dayCb(oldData, self.hostname)
       
 
   def delSubscription(self, name, type):
     self.subs[type].remove(name)
 
-  def powerOn(self):
-    pass
+  def powerSet(self, newVal):
+    self.relayState = newVal
 
-  def powerOff(self):
-    pass
 
   def recallHistory(self, buf):
     """
