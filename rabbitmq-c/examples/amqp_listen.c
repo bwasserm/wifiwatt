@@ -35,7 +35,8 @@
 #define BUF_LEN           65536
 #define HANDSHAKE_STR     "handshake test string"
 
-#define ADC_MULT          0.0588
+#define ADC_MULT          0.0722735
+#define ADC_MAX_LEN       200
 
 // GPIO defines
 #define BCM2708_PERI_BASE        0x20000000
@@ -121,9 +122,10 @@ int main(void) {
 
     if(fork() == 0){  // Child process
       uint8_t relay_state;
-      int16_t val;
+      int16_t val, adc_max;
       double current;
       int adc_fd;
+      
 
       if((adc_fd = init_ADC()) < 0){
         printf("Cannot open ADC fd\n");
@@ -131,25 +133,34 @@ int main(void) {
       }
   
       while(1){
-        if((val = get_ADC(adc_fd)) < 0){
-          exit(1);
+        adc_max = 0;
+        for(int i = 0; i < ADC_MAX_LEN; i++){
+          if((val = get_ADC(adc_fd)) < 0){
+            exit(1);
+          }
+
+          if(adc_max < val){
+            adc_max = val;
+          }
         }
-        current = val * ADC_MULT;
+
+        current = adc_max * ADC_MULT;
         relay_state = ((GPIO_READ >> RELAY_NUM) & 1);
         sprintf(buf, "{\"hostname\": \"%s\", \"current\": \"%f\", \"relayState\": \"%d\"}", 
           PI, current, relay_state & 1);
+        printf("Relay: %d\n", relay_state);
   
         // Publish values to server
         if(!report_error(amqp_basic_publish(conn, 1, exch_value_name, 
             amqp_empty_bytes, 0, 0, NULL, amqp_cstring_bytes(buf)), "Publishing")){
           exit(1);
         }
-  
-        microsleep(200000);
       }
     }
   
     if(fork() == 0){  // Child process
+      char c;
+
       // Consume cmd queue
       amqp_basic_consume(conn, 1, queue_cmd_name, amqp_empty_bytes, 0, 1, 0, 
         amqp_empty_table);
@@ -176,13 +187,12 @@ int main(void) {
         // TODO implement command
         printf("Command: %.*s\n", mes_len, buf);
         
-        switch(buf[0]){
-          case '0':
-            GPIO_CLR = 1 << RELAY_NUM; 
-          case '1':
-            GPIO_SET = 1 << RELAY_NUM; 
-          default:
-            fprintf(stderr, "Error: Unknown relay code %c\n", buf[0]);
+        if(buf[0] == '0'){
+          GPIO_CLR = 1 << RELAY_NUM; 
+        }else if(buf[0] == '1'){
+          GPIO_SET = 1 << RELAY_NUM; 
+        }else{
+          fprintf(stderr, "Error: Unknown relay code %c\n", buf[0]);
         }
   
         amqp_maybe_release_buffers(conn);
