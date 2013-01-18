@@ -59,6 +59,7 @@ class Application(tornado.web.Application):
     # setup tornado app
     handlers = [
       (r"/", MainHandler),
+      (r'/favicon.ico', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), "static")}),
     ] + sockJSUrls
     settings = dict(
       cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__",
@@ -74,9 +75,6 @@ class Application(tornado.web.Application):
     self.nodes = dict() # dict of hostname=wifiWattNode(object)
     self.webClients = set()
 # / class Application
-
-
-
 
 class MainHandler(tornado.web.RequestHandler):
   def get(self):

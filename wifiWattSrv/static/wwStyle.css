@@ -161,10 +161,21 @@ input[type=checkbox] {
 body {
   background: #1a1a1a url('bg.png') repeat;
   /*background: #c8c8c8;*/
+  text-shadow: 0px 1px #000000;
+  color: #DDDDDD;
 }
 h1 {
   margin-bottom: 5px;
+  text-shadow: 0px 1px #808080;
 }
+a {
+  color: #FFFFFF;
+  text-decoration: underline;
+}
+a:hover {
+  text-decoration: none;
+}
+
 
 #console {
   display: none; /* dev only */
@@ -186,14 +197,13 @@ div#headerPanel {
   background: #111111;
   padding: 10px;
   margin-bottom: 20px;
-  color: #DDDDDD;
   box-shadow: 1px 1px 5px #191919;
   -webkit-box-shadow: 1px 1px 5px #191919;
   -moz-box-shadow: 1px 1px 5px #191919;
 }
 
-div.nodeList {
-
+div#nodeList {
+  min-height: 10px;
 }
 
 div.nodeContainer {
@@ -238,11 +248,11 @@ div#detailsPane {
   /*background: rgba(17, 17, 17, 0.85);*/
   background: #111111;
   padding: 10px;
+  /*padding-bottom: 0;*/
   color: #DDDDDD;
   box-shadow: 1px 1px 5px #191919;
   -webkit-box-shadow: 1px 1px 5px #191919;
   -moz-box-shadow: 1px 1px 5px #191919;
-  height: 396px;
 }
 
 div#graphWindowSel {
@@ -250,10 +260,11 @@ div#graphWindowSel {
   width: 250px;
 }
 
-div#graphWindow {
+div.graphWindow {
   background: #191919;
   padding: 10px;
   border: 1px solid #222222;
   width: 500px;
   height: 300px;
+  margin-bottom: 10px;
 }

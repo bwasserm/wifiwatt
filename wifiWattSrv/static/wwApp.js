@@ -153,7 +153,9 @@ $(document).ready(function() {
       app.hourData[nodeObj.name] = newSeries;
     }
     // add to graph
-    smoothie.addTimeSeries(newSeries);
+    opts = { strokeStyle:'rgb(0, 168, 0)', fillStyle:'rgba(0, 168, 0, 0.2)', lineWidth:3 };
+    detailSmoothie.addTimeSeries(newSeries, opts);
+    smoothie.addTimeSeries(newSeries, opts);
     // send message to server
     conn.reqSubscription(type, nodeObj);
   };
@@ -162,6 +164,7 @@ $(document).ready(function() {
     log("removed subscription");
     // delete timeline element/remove from graph
     ts = app.hourData[nodeObj.name];
+    detailSmoothie.removeTimeSeries(ts);
     smoothie.removeTimeSeries(ts);
     delete app.hourData[nodeObj.name];
     // send notification to server
@@ -413,7 +416,33 @@ $(document).ready(function() {
   connect(handlers, app);
 
   // smoothie chart inits //////////////////////////////////////////////////////
-  var smoothie = new SmoothieChart({"maxValue": "20", "minValue": "0"});
+  detailOpts = {
+    "maxValue": "20",
+    "minValue": "0",
+    "millisPerPixel": 60,
+    "grid": {
+      fillStyle: '#333',
+      strokeStyle: '#555',
+      lineWidth: 1,
+      millisPerLine: 960,
+      verticalSections: 4 
+    }
+  }
+  opts = {
+    "maxValue": "20",
+    "minValue": "0",
+    "millisPerPixel": 600,
+    "grid": {
+      fillStyle: '#333',
+      strokeStyle: '#555',
+      lineWidth: 1,
+      millisPerLine: 9600,
+      verticalSections: 4 
+    }
+  }
+  var detailSmoothie = new SmoothieChart(detailOpts);
+  detailSmoothie.streamTo(document.getElementById("detailGraphCanvas"), 400);
+  var smoothie = new SmoothieChart(opts);
   smoothie.streamTo(document.getElementById("graphCanvas"), 400);
 
 });
