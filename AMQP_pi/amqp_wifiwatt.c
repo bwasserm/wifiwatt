@@ -5,11 +5,20 @@
 #include <stdint.h>
 #include <amqp.h>
 #include <amqp_framing.h>
-
-#include <assert.h>
-
+#include <sys/mman.h>
+#include <fcntl.h>
 #include "utils.h"
+#include <assert.h>
+#include <errno.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
+#define PAGE_SIZE (4*1024)
+#define BLOCK_SIZE (4*1024)
+
+// Pi values
 #define PI                "applepi"
 #define HOSTNAME          "lambdadev.pc.cc.cmu.edu"
 #define PORT              5672
@@ -21,13 +30,41 @@
 #define QUEUE_CMD_NAME    "node." PI ".cmd"
 #define ROUTE_HAND_NAME   QUEUE_HAND_NAME
 #define ROUTE_CMD_NAME    QUEUE_CMD_NAME
+#define ROUTE_HAND_SEND   "server.ANYHOST.handshake"
 
 #define BUF_LEN           65536
 #define HANDSHAKE_STR     "handshake test string"
 
-#define ADC_MAX           255
-#define ADC_VOLT          3.3
-#define ADC_RES           300
+#define ADC_MULT          0.0588
+
+// GPIO defines
+#define BCM2708_PERI_BASE        0x20000000
+#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controller */
+
+// GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) or SET_GPIO_ALT(x,y)
+#define INP_GPIO(g) *(gpio+((g)/10)) &= ~(7<<(((g)%10)*3))
+#define OUT_GPIO(g) *(gpio+((g)/10)) |=  (1<<(((g)%10)*3))
+#define SET_GPIO_ALT(g,a) *(gpio+(((g)/10))) |= (((a)<=3?(a)+4:(a)==4?3:2)<<(((g)%10)*3))
+
+#define GPIO_SET *(gpio+7)  // sets bits which are 1 ignores bits which are 0
+#define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
+#define GPIO_READ *(gpio+13) // read bits which are 1
+
+#define RELAY_NUM 14
+
+// Location of i2c 
+#define I2C_DEV "/dev/i2c-1"
+
+// Address of device
+#define ADDRESS 0x2a
+
+// I2C sync constants
+#define ZERO_MASK 0xFC
+
+// GPIO variables
+int  mem_fd;
+unsigned *gpio_map;
+volatile unsigned *gpio;
 
 // Global variables for names of things used in multiple functions
 amqp_bytes_t queue_hand_name;
@@ -42,8 +79,11 @@ amqp_bytes_t route_cmd_name;
 ssize_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len);
 int perform_handshake(amqp_connection_state_t conn);
 amqp_connection_state_t connect_server(void);
-void report_error(int x, char const *context);
-void report_amqp_error(amqp_rpc_reply_t x, char const *context);
+int report_error(int x, char const *context);
+int report_amqp_error(amqp_rpc_reply_t x, char const *context);
+void setup_io(void);
+int init_ADC(void);
+int16_t get_ADC(int fd);
 
 int main(void) {
   char buf[BUF_LEN];
@@ -60,6 +100,13 @@ int main(void) {
   route_hand_name = amqp_cstring_bytes(ROUTE_HAND_NAME);
   route_cmd_name = amqp_cstring_bytes(ROUTE_CMD_NAME);
 
+  // Set up gpi pointer for direct register access
+  setup_io();
+
+  // Switch GPIO 7 to output mode
+  INP_GPIO(RELAY_NUM);
+  OUT_GPIO(RELAY_NUM);
+
   while(1){
     if((conn = connect_server()) == NULL){
       continue;
@@ -73,14 +120,24 @@ int main(void) {
     printf("Finish handshake\n");
 
     if(fork() == 0){  // Child process
-      uint8_t val;
+      uint8_t relay_state;
+      int16_t val;
       double current;
+      int adc_fd;
+
+      if((adc_fd = init_ADC()) < 0){
+        printf("Cannot open ADC fd\n");
+        exit(1);
+      }
   
       while(1){
-        //val = get_adc();
-        val = rand() % 256;
-        current = ((double) val / ADC_MAX * ADC_VOLT) / ADC_RES;
-        sprintf(buf, "%f", current);
+        if((val = get_ADC(adc_fd)) < 0){
+          exit(1);
+        }
+        current = val * ADC_MULT;
+        relay_state = ((GPIO_READ >> RELAY_NUM) & 1);
+        sprintf(buf, "{\"hostname\": \"%s\", \"current\": \"%f\", \"relayState\": \"%d\"}", 
+          PI, current, relay_state & 1);
   
         // Publish values to server
         if(!report_error(amqp_basic_publish(conn, 1, exch_value_name, 
@@ -88,7 +145,7 @@ int main(void) {
           exit(1);
         }
   
-        microsleep(2000);
+        microsleep(200000);
       }
     }
   
@@ -118,6 +175,15 @@ int main(void) {
   
         // TODO implement command
         printf("Command: %.*s\n", mes_len, buf);
+        
+        switch(buf[0]){
+          case '0':
+            GPIO_CLR = 1 << RELAY_NUM; 
+          case '1':
+            GPIO_SET = 1 << RELAY_NUM; 
+          default:
+            fprintf(stderr, "Error: Unknown relay code %c\n", buf[0]);
+        }
   
         amqp_maybe_release_buffers(conn);
       }
@@ -197,30 +263,38 @@ amqp_connection_state_t connect_server(){
   return conn;
 }
 
-//TODO finish removing die on
+// Return 0 on error, 1 on success
 int perform_handshake(amqp_connection_state_t conn){
   ssize_t mes_len;
   char buf[BUF_LEN];
   amqp_frame_t frame;
 
   // Publish handshake to server
-  die_on_error(amqp_basic_publish(conn, 1, exch_mess_name, amqp_empty_bytes, 0, 
-    0, NULL, amqp_cstring_bytes(HANDSHAKE_STR)), "Publishing handshake");
+  if(!report_error(amqp_basic_publish(conn, 1, exch_mess_name, 
+      amqp_cstring_bytes(ROUTE_HAND_SEND), 0, 
+      0, NULL, amqp_cstring_bytes(PI)), "Message Publish")){
+    return 0;
+  }
+
   printf("publish message\n");
 
   amqp_basic_consume(conn, 1, queue_hand_name, amqp_empty_bytes, 0, 1, 0, 
     amqp_empty_table);
-  die_on_amqp_error(amqp_get_rpc_reply(conn), "consuming cmd queue");
+  if(!report_amqp_error(amqp_get_rpc_reply(conn), "consuming cmd queue")){
+    return 0;
+  }
 
-  die_on_error(amqp_simple_wait_frame(conn, &frame), 
-    "waiting for header frame");
+  if(!report_error(amqp_simple_wait_frame(conn, &frame),
+    "waiting for header frame")){
+    return 0;
+  }
 
   if(frame.frame_type != AMQP_FRAME_METHOD || 
       frame.payload.method.id != AMQP_BASIC_DELIVER_METHOD)
-    printf("Error: handshake wrong frame or method\n");
+    fprintf(stderr, "Error: handshake wrong frame or method\n");
 
   if((mes_len = get_body(conn, buf, BUF_LEN)) < 0){
-    exit(1);
+    fprintf(stderr, "Error: handshake get body\n");
   }
 
   // TODO implement command
@@ -228,7 +302,7 @@ int perform_handshake(amqp_connection_state_t conn){
 
   amqp_maybe_release_buffers(conn);
 
-  return 0;
+  return 1;
 }
 
 ssize_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len){
@@ -241,13 +315,13 @@ ssize_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len){
 
   // Get next frame
   if(amqp_simple_wait_frame(conn, &frame) < 0){
-    printf("Error: Waiting for header frame.\n");
+    fprintf(stderr, "Error: Waiting for header frame.\n");
     return -1;
   }
 
   // Make sure frame is header
   if(frame.frame_type != AMQP_FRAME_HEADER){
-    printf("Error: Expected header, got frame type 0x%X.\n", frame.frame_type);
+    fprintf(stderr, "Error: Expected header, got frame type 0x%X.\n", frame.frame_type);
     return -1;
   }
   
@@ -258,18 +332,18 @@ ssize_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len){
   while(body_remaining){
     // Get next frame
     if(amqp_simple_wait_frame(conn, &frame) < 0){
-      printf("Error: Waiting for body frame.\n");
+      fprintf(stderr, "Error: Waiting for body frame.\n");
       return -1;
     }
 
     // Make sure frame is body
     if(frame.frame_type != AMQP_FRAME_BODY){
-      printf("Error: Expected body, got frame type 0x%X.\n", frame.frame_type);
+      fprintf(stderr, "Error: Expected body, got frame type 0x%X.\n", frame.frame_type);
       return -1;
     }
 
     if(buf_len < frame.payload.body_fragment.len){
-      printf("Error: Not enough space in buffer for body.\n");
+      fprintf(stderr, "Error: Not enough space in buffer for body.\n");
       return -1;
     }
 
@@ -330,4 +404,70 @@ int report_amqp_error(amqp_rpc_reply_t x, char const *context) {
   }
 
   return 0;
+}
+
+//
+// Set up memory regions to access GPIO
+//
+void setup_io()
+{
+  /* open /dev/mem */
+  if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) 
+  {
+    printf("can't open /dev/mem \n");
+    exit(-1);
+  }
+
+  /* mmap GPIO */
+  gpio_map = (unsigned *)mmap(
+      NULL,             //Any adddress in our space will do
+      BLOCK_SIZE,       //Map length
+      PROT_READ|PROT_WRITE,// Enable reading & writting to mapped memory
+      MAP_SHARED,       //Shared with other processes
+      mem_fd,           //File to map
+      GPIO_BASE         //Offset to GPIO peripheral
+      );
+
+  close(mem_fd); //No need to keep mem_fd open after mmap
+
+  if ((long)gpio_map < 0) {
+    printf("Error: GPIO mmap error %d\n", (int)gpio_map);
+    exit(-1);
+  }
+
+  // Always use volatile pointer!
+  gpio = (volatile unsigned *)gpio_map;    
+
+} // setup_io
+
+// Open fd and set up as i2c (-1 on error)
+int init_ADC(void){
+    int fd;
+
+    // Open file for read and write
+    if((fd = open(I2C_DEV, O_RDWR)) < 0){
+        fprintf(stderr, "Error: Init ADC error - %s\n", strerror(errno));
+        return -1;
+    }
+
+    // Set up for i2c with slave at the address
+    if(ioctl(fd, I2C_SLAVE, ADDRESS) < 0){
+        fprintf(stderr, "Error: ADC ioctl error - %s\n", strerror(errno));
+        return -1;
+    }
+
+    return fd;
+}
+
+// Get the 16 bit value from the ADC (-1 on error)
+int16_t get_ADC(int fd){
+    char buf[2] = {0};
+
+    // Using I2C Read
+    if(read(fd, buf, 1) != 1) {
+        fprintf(stderr, "Error: Get ADC read error - %s\n", strerror(errno));
+        return -1;
+    }
+
+    return (int16_t)((uint16_t) buf[0]);
 }
