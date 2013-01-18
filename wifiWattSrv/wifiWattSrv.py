@@ -96,6 +96,8 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
     self.app.webClients = self.webClients
     # add to client pool
     self.webClients.add(self)
+    # send back server time for time fix
+    self.sendJson("timeFix", dict(serverTime = time.time()));
     # inform/subscript the webclient of/to known nodes with newNode callback
     for (nodeName, nodeObj) in self.app.nodes.iteritems():
       self.newNodeCb(nodeObj)

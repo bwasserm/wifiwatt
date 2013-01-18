@@ -2,13 +2,13 @@ $(document).ready(function() {
   var conn = null;
 
   // web console call
-  function log(text) {
-    msg = '<div class="text">' + text + '</span>\n';
-    var webConsole = $('#console');
-    webConsole.html(webConsole.html() + msg);
-    console.log(text)
-  }
-  // function log(text) {}
+  // function log(text) {
+  //   msg = '<div class="text">' + text + '</span>\n';
+  //   var webConsole = $('#console');
+  //   webConsole.html(webConsole.html() + msg);
+  //   console.log(text)
+  // }
+  function log(text) {}
 
   // sockJS
   function connect(handlers, app) {
@@ -23,7 +23,8 @@ $(document).ready(function() {
 
     conn.onmessage = function(e) {
       // log and parse the message
-      log('Received: ' + e.data);
+      
+      log('Received: (' + ') ' + e.data);
       var newMsg = JSON.parse(e.data);
       // sanity check for message validity
       if("type" in newMsg) {
@@ -34,6 +35,9 @@ $(document).ready(function() {
         }
         else if(type == "newData") {
           handlers.newData(newMsg);
+        }
+        else if(type == "timeFix") {
+          app.timeFixHandler(newMsg)
         }
       }
       else {
@@ -89,6 +93,18 @@ $(document).ready(function() {
   app.graphWindow = "null"
   app.conn = null;
 
+  // time skew fix
+  app.serverTimeSkew = 0
+  app.timeFixHandler = function(msgJson) {
+    serverTime = parseFloat(msgJson.serverTime);
+    serverTimeMS = serverTime * 1000;
+    var d = new Date();
+    var clientTime = d.getTime();
+    app.serverTimeSkew = clientTime - serverTimeMS;
+    console.log(app.serverTimeSkew);
+  };
+
+
   app.addNode = function(hostname) {
     // create the new object and fill in fields
     nodeObj = new Object();
@@ -130,6 +146,14 @@ $(document).ready(function() {
   app.addSubscription = function(type, nodeObj) {
     log("added subscription");
     // make a timeline element
+    var newSeries = new TimeSeries();
+    if(type == "hour") {
+      app.hourData[nodeObj.name] = newSeries;
+    } else if(type == "day") {
+      app.hourData[nodeObj.name] = newSeries;
+    }
+    // add to graph
+    smoothie.addTimeSeries(newSeries);
     // send message to server
     conn.reqSubscription(type, nodeObj);
   };
@@ -137,6 +161,9 @@ $(document).ready(function() {
   app.delSubscription = function(type, nodeObj) {
     log("removed subscription");
     // delete timeline element/remove from graph
+    ts = app.hourData[nodeObj.name];
+    smoothie.removeTimeSeries(ts);
+    delete app.hourData[nodeObj.name];
     // send notification to server
     conn.delSubscription(type, nodeObj);
   };
@@ -154,7 +181,7 @@ $(document).ready(function() {
     // update the power part of the ui
     // check if we're in a transition
     inTrans = $("div#nodeList input#" + nodeObj.pwrId + "");
-    console.log("nodePwrStatus: " + nodePwrStatus + " nodeObj.pwrState: " + nodeObj.pwrState);
+    // console.log("nodePwrStatus: " + nodePwrStatus + " nodeObj.pwrState: " + nodeObj.pwrState);
 
     if(nodePwrStatus != nodeObj.pwrState) {
       // the node successfully changed state; enable and update state
@@ -170,7 +197,12 @@ $(document).ready(function() {
     app.enableNodePwr(nodeObj, msgData.relayState);
     // update text
     current = msgData.dataPoints[0].data;
-    $("div#nodeList div#"+nodeObj.contId+" div.currentVal").html(current);
+    power = current * 120; // assume 120V system
+    current = Math.round(current*100) / 100; // round current
+    power = Math.round(power*10) / 10;
+    statusText = "Current: " + current + "A&nbsp;&nbsp;&nbsp;&nbsp;Power: " + power + "W";
+
+    $("div#nodeList div#"+nodeObj.contId+" div.currentVal").html(statusText);
     // update color indicator
     if(nodeObj.pwrState == false) {
       // device is off. grey indicator
@@ -211,12 +243,17 @@ $(document).ready(function() {
       // add to the ui
       nodeListElem = $('#nodeList');
       newNodeHTML = '      <div class="nodeContainer" id="'+newNodeObj.contId+'">\
-        <label>\
-          <input type="checkbox" class="nodeSelect" name="'+newNodeObj.id+'" id="'+newNodeObj.id+'" value="" />\
-          <span class="nodeName">'+newNodeObj.name+'</span>\
+        <div class="nodeGraphCtrl">Graph\
+          <div class="squaredTwo">\
+            <input type="checkbox" class="nodeSelect" name="'+newNodeObj.id+'" id="'+newNodeObj.id+'" value="" />\
+            <label for="'+newNodeObj.id+'" class="nodeLabel"></label>\
+          </div>\
+        </div>\
+          <h1 class="nodeName">'+newNodeObj.name+'</h1>\
           <div class="currentVal">0.00</div>\
-        </label>\
-        <input type="checkbox" class="nodePower" name="'+newNodeObj.pwrId+'" id="'+newNodeObj.pwrId+'" value="" />\
+        <div class="nodePowerCtrl">Power\
+          <div class="squaredOne"><input type="checkbox" class="nodePower" name="'+newNodeObj.pwrId+'" id="'+newNodeObj.pwrId+'" value="" /><label for="'+newNodeObj.pwrId+'"></label></div>\
+        </div>\
       </div>\n';
       nodeListElem.append(newNodeHTML);
     };
@@ -244,17 +281,54 @@ $(document).ready(function() {
       app.updateNodeStatus(nodeObj, msgData)
 
     } else if (msgData.subType == "hour") {
+
+      // ignore unnecessary data
       if(app.graphWindow != "hour") {
-        // ignore. unnecessary data
         return -1;
       }
-      // TODO: do something with this
+      // get node and timeline obj
+      nodeObj = app.getNodeFromHN(msgData.nodeName);
+      if(nodeObj == -1) {
+        log("Status update from unknown node " + msgData.nodeName + "!");
+        return -1;
+      }
+      ts = app.hourData[nodeObj.name];
+      // plot the points on the graph
+      points = msgData.dataPoints;
+      for (var i = points.length - 1; i >= 0; i--) {
+        // convert from server time (floats sec)
+        timestampS = points[i].timestamp;
+        timestampMS = timestampS * 1000;
+        timestampMS = timestampMS + app.serverTimeSkew;
+        // var d = new Date();
+        // var time = d.getTime();
+        // console.log("server: " + timestampMS + " client: " + time);
+        ts.append(timestampMS, points[i].data);
+      };
+
 
     } else if (msgData.subType == "day") {
+      
+      // ignore unnecessary data
       if(app.graphWindow != "day") {
-        // ignore. unnecessary data
         return -1;
       }
+      // get node and timeline obj
+      nodeObj = app.getNodeFromHN(msgData.nodeName);
+      if(nodeObj == -1) {
+        log("Status update from unknown node " + msgData.nodeName + "!");
+        return -1;
+      }
+      ts = app.dayData[nodeObj.name];
+      // plot the points on the graph
+      points = msgData.dataPoints;
+      for (var i = points.length - 1; i >= 0; i--) {
+        // convert from server time (floats sec)
+        timestampS = points[i].timestamp;
+        timestampMS = timestampS * 1000;
+        timestampMS = timestampMS + app.serverTimeSkew;
+        ts.append(timestampMS, points[i].data);
+      };
 
     }
   };
@@ -293,13 +367,21 @@ $(document).ready(function() {
     } else {
       app.graphWindow = "day"
     }
-    log("Set graph type to " + app.graphWindow + ".");
+    console.log("Set graph type to " + app.graphWindow + ".");
     // tell server
     // remove timelines from graph
     // destroy timeline cache
     // build new timelines
     // scale graph
     // add new timelines to graph
+  }
+
+  handlers.uiSelectAll = function(e) {
+    $(this)
+  }
+
+  handlers.uiSelectNone = function(e) {
+    $(this)
   }
 
   // ui handler installations //////////////////////////////////////////////////
@@ -321,8 +403,21 @@ $(document).ready(function() {
     $("div#nodeList input.nodePower").change(handlers.uiNodePower);
   };
   ui.rehandleNodeList();
+
+  // node list selection btns
+  $("a#nodeListSA").click(handlers.uiSelectAll);
+  $("a#nodeListSN").click(handlers.uiSelectNone);
   
 
   // sockjs handler installations //////////////////////////////////////////////
   connect(handlers, app);
+
+  // smoothie chart inits //////////////////////////////////////////////////////
+  var smoothie = new SmoothieChart({"maxValue": "20", "minValue": "0"});
+  smoothie.streamTo(document.getElementById("graphCanvas"), 400);
+
 });
+
+
+
+

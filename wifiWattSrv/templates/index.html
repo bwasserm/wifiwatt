@@ -3,39 +3,56 @@
     <title>wifiWatt Control Panel</title>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script> 
     <script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+    <script type="text/javascript" src="/static/smoothie.js"></script>
     <script type="text/javascript" src="/static/wwApp.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/reset.css" />
     <link rel="stylesheet" type="text/css" href="/static/960.css" />
     <link rel="stylesheet" type="text/css" href="/static/text.css" />
     <link rel="stylesheet" type="text/css" href="/static/wwStyle.css" />
+    <!-- <link rel="stylesheet" type="text/css" href="/static/prettyCheckboxes.css" /> -->
   </head>
   <body>
-    <div id="console"></div>
+    <div class="container_12">
+      <div id="console"></div>
+
+      <div class="grid_12"><div id="headerPanel">
+        <h1>WifiWatt</h1>
+        <span>A CMU build18 project by <a href="mailto:bwasserm@andrew.cmu.edu">Ben Wasserman</a>, <a href="mailto:nabcouwer@andrew.cmu.edu">Neil Abcouwer</a>, <a href="mailto:amort@andrew.cmu.edu">Andrew Mort</a>, and <a href="ihartwig@andrew.cmu.edu">Ian Hartwig</a></span>
+      </div></div>
       
-    <div id="nodeList">
-      <form>
-        <!--
-        <div class="nodeContainer">
-          <label>
-            <input type="checkbox" name="node-hostname" id="node-hostname" value="" />
-            <span class="nodeName">Hostname</span>
-          </label>
-          <input type="checkbox" name="power-hostname" id="power-hostname" value="" />
+      <div class="clear"></div>
+      <div id="nodeList" class="grid_5">
+        <div id="nodeListSelTools"
+          <a id="nodeListSA">Select All</a>
+          <a id="nodeListSN">Select None</a>
         </div>
-        -->
-      </form>
-    </div>
-    <div id="detailsPane">
-      <div id="graphWindowSel">
         <form>
-          <label>
-            <input type="checkbox" id="graphWindow" name="graphWindow" checked="true" />
-            <p>
-              <span>Hour</span>
-              <span>Day</span>
-          </label>
+          <!--
+          <div class="nodeContainer">
+            <label>
+              <input type="checkbox" name="node-hostname" id="node-hostname" value="" />
+              <span class="nodeName">Hostname</span>
+            </label>
+            <input type="checkbox" name="power-hostname" id="power-hostname" value="" />
+          </div>
+          -->
         </form>
       </div>
-    </div>
+
+      <div class="grid_7"><div id="detailsPane">
+        <div id="graphWindowSel">
+          <form>
+            <input type="checkbox" id="graphWindow" name="graphWindow" checked="true" />
+            <label for="graphWindow"></label>
+          </form>
+        </div>
+
+        <div id="graphWindow">
+          <canvas id="graphCanvas" width="500" height="300"></canvas>
+        </div>
+
+
+      </div></div> <!-- / detailsPane, grid_7 -->
+    </div> <!-- / container_12 -->
   </body>
 </html>
