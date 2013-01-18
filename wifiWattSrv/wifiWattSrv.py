@@ -412,7 +412,7 @@ class RabbitClient(object):
     hostname = msgData["hostname"]
     value = float(msgData["current"])
     relayState = bool(int(msgData["relayState"]))
-    LOGGER.info("Raw: %s Parsed: %d", msgData["relayState"], int(relayState))
+    # LOGGER.info("Raw: %s Parsed: %d", msgData["relayState"], int(relayState))
 
     # if we've inited this node, call it's append method
     if hostname in self.app.nodes:

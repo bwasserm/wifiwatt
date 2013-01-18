@@ -83,6 +83,7 @@ $(document).ready(function() {
   // holds local current data caches
   app.statusData = new Object();
   app.hourData = new Object();
+  app.detailData = new Object();
   app.dayData = new Object();
 
   // manages what our current nodes are
@@ -146,15 +147,17 @@ $(document).ready(function() {
   app.addSubscription = function(type, nodeObj) {
     log("added subscription");
     // make a timeline element
+    var newDetailSeries = new TimeSeries()
     var newSeries = new TimeSeries();
     if(type == "hour") {
+      app.detailData[nodeObj.name] = newDetailSeries;
       app.hourData[nodeObj.name] = newSeries;
     } else if(type == "day") {
-      app.hourData[nodeObj.name] = newSeries;
+      app.dayData[nodeObj.name] = newSeries;
     }
     // add to graph
     opts = { strokeStyle:'rgb(0, 168, 0)', fillStyle:'rgba(0, 168, 0, 0.2)', lineWidth:3 };
-    detailSmoothie.addTimeSeries(newSeries, opts);
+    detailSmoothie.addTimeSeries(newDetailSeries, opts);
     smoothie.addTimeSeries(newSeries, opts);
     // send message to server
     conn.reqSubscription(type, nodeObj);
@@ -163,8 +166,9 @@ $(document).ready(function() {
   app.delSubscription = function(type, nodeObj) {
     log("removed subscription");
     // delete timeline element/remove from graph
+    dts = app.detailData[nodeObj.name];
     ts = app.hourData[nodeObj.name];
-    detailSmoothie.removeTimeSeries(ts);
+    detailSmoothie.removeTimeSeries(dts);
     smoothie.removeTimeSeries(ts);
     delete app.hourData[nodeObj.name];
     // send notification to server
@@ -295,6 +299,7 @@ $(document).ready(function() {
         log("Status update from unknown node " + msgData.nodeName + "!");
         return -1;
       }
+      dts = app.detailData[nodeObj.name];
       ts = app.hourData[nodeObj.name];
       // plot the points on the graph
       points = msgData.dataPoints;
@@ -306,6 +311,7 @@ $(document).ready(function() {
         // var d = new Date();
         // var time = d.getTime();
         // console.log("server: " + timestampMS + " client: " + time);
+        dts.append(timestampMS, points[i].data);
         ts.append(timestampMS, points[i].data);
       };
 

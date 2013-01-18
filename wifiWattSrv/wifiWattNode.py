@@ -26,7 +26,7 @@ class ringBuffer(object):
 
   def getLast(self):
     # return the most recently appended element
-    print(repr(self.data[-1]))
+    # print(repr(self.data[-1]))
     return self.data[-1]
 
 class wwDataPoint(object):
@@ -86,8 +86,8 @@ class wifiWattNode(object):
     rawr = self.hourbuf.getLast()
     oldTime = rawr.timestamp
     newTime = newDP.timestamp
-    print(oldTime)
-    print(newTime)
+    # print(oldTime)
+    # print(newTime)
     return (oldTime + 0.150) < newTime
 
   def appendData(self, newDP, relayState):

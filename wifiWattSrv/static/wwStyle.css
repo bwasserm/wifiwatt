@@ -204,6 +204,7 @@ div#headerPanel {
 
 div#nodeList {
   min-height: 10px;
+  margin-bottom: 20px;
 }
 
 div.nodeContainer {
@@ -248,6 +249,7 @@ div#detailsPane {
   /*background: rgba(17, 17, 17, 0.85);*/
   background: #111111;
   padding: 10px;
+  margin-bottom: 20px;
   /*padding-bottom: 0;*/
   color: #DDDDDD;
   box-shadow: 1px 1px 5px #191919;
@@ -265,6 +267,6 @@ div.graphWindow {
   padding: 10px;
   border: 1px solid #222222;
   width: 500px;
-  height: 300px;
+  /*height: 300px;*/
   margin-bottom: 10px;
 }
