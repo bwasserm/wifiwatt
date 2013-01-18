@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <time.h>
 
 // Location of i2c 
 #define I2C_DEV "/dev/i2c-1"
@@ -66,10 +67,30 @@ int main(){
     uint8_t h_byte = 0;
     uint8_t l_byte = 0;
     int fd;
+  
 
     if((fd = init_ADC()) < 0){
         printf("Failed to open bus: %s\n", strerror(errno));
     }
+
+    clock_t uptime[20];
+
+    for(int i = 0; i < 20; i++){
+      uptime[i] = clock();
+      //uptime[i] = (long long unsigned)clock() / (CLOCKS_PER_SEC / 1000));
+      data = get_ADC_byte(fd);
+    }
+
+    printf("CLOCKS_PER_SECOND: %llu\n", CLOCKS_PER_SEC);
+
+    for(int i = 0; i < 19; i++){
+      clock_t diff = uptime[i + 1] - uptime[i];
+
+      printf("Current time: %llu - data: %d     %x\n", diff / (CLOCKS_PER_SEC / 1000), data, data); 
+      printf("Current time: %d - data: %d     %x\n", diff / (CLOCKS_PER_SEC / 1000), data, data); 
+    }
+
+    exit(0);
 
     while(1){
       // Read in 2 bytes

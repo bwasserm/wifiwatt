@@ -128,7 +128,7 @@ int main(void) {
       
 
       if((adc_fd = init_ADC()) < 0){
-        printf("Cannot open ADC fd\n");
+        fprintf(stderr, "Cannot open ADC fd\n");
         exit(1);
       }
   
@@ -148,7 +148,6 @@ int main(void) {
         relay_state = ((GPIO_READ >> RELAY_NUM) & 1);
         sprintf(buf, "{\"hostname\": \"%s\", \"current\": \"%f\", \"relayState\": \"%d\"}", 
           PI, current, relay_state & 1);
-        printf("Relay: %d\n", relay_state);
   
         // Publish values to server
         if(!report_error(amqp_basic_publish(conn, 1, exch_value_name, 
@@ -159,8 +158,6 @@ int main(void) {
     }
   
     if(fork() == 0){  // Child process
-      char c;
-
       // Consume cmd queue
       amqp_basic_consume(conn, 1, queue_cmd_name, amqp_empty_bytes, 0, 1, 0, 
         amqp_empty_table);
@@ -184,9 +181,6 @@ int main(void) {
           exit(1);
         }
   
-        // TODO implement command
-        printf("Command: %.*s\n", mes_len, buf);
-        
         if(buf[0] == '0'){
           GPIO_CLR = 1 << RELAY_NUM; 
         }else if(buf[0] == '1'){
@@ -307,7 +301,6 @@ int perform_handshake(amqp_connection_state_t conn){
     fprintf(stderr, "Error: handshake get body\n");
   }
 
-  // TODO implement command
   printf("Handshake: %.*s\n", mes_len, buf);
 
   amqp_maybe_release_buffers(conn);
