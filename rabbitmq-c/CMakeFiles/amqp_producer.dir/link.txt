@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/amqp_producer.dir/amqp_producer.o CMakeFiles/amqp_producer.dir/utils.o CMakeFiles/amqp_producer.dir/unix/platform_utils.o  -o amqp_producer -rdynamic 

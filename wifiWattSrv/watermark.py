@@ -12,7 +12,7 @@ class termColors:
 	 self.white	= "\x1b[37m"
 
 
-printWatermark():
+def printWatermark():
 	tc = termColors()
 
 	print(tc.red + "__" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "____" + tc.green + "/\\\\\\" + tc.red + "________" + tc.green + "/\\\\\\" + tc.red + "__" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "__" + tc.green + "/\\\\\\" + tc.red + "______________" + tc.green + "/\\\\\\\\\\\\\\\\\\\\\\\\" + tc.red + "_________" + tc.green + "/\\\\\\" + tc.red + "_____" + tc.green + "/\\\\\\\\\\\\\\\\\\" + tc.red + "____        " + tc.cancel);

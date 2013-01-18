@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/amqp_listen.dir/amqp_listen.o CMakeFiles/amqp_listen.dir/utils.o CMakeFiles/amqp_listen.dir/unix/platform_utils.o  -o amqp_listen -rdynamic 

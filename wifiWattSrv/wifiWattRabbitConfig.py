@@ -74,19 +74,19 @@ class generateRabbitObjs(object):
     )
     # messaging queues
     self.handshakeQueAttr = dict(
-      queue = "ww.server.{0}.handshake".format(hostname),
+      queue = "server.{0}.handshake".format(hostname),
       durable = False,
       exclusive = True,
       auto_delete = False,
     )
     self.cmdQueAttr = dict(
-      queue = "ww.server.{0}.cmd".format(hostname),
+      queue = "server.{0}.cmd".format(hostname),
       durable = False,
       exclusive = True,
       auto_delete = False,
     )
     self.nErrQueAttr = dict(
-      queue = "ww.server.{0}.nodeError".format(hostname),
+      queue = "server.{0}.nodeError".format(hostname),
       durable = False,
       exclusive = True,
       auto_delete = False,
@@ -104,17 +104,17 @@ class generateRabbitObjs(object):
       routing_key = "#"
     )
     self.handshakeBindAttr = dict(
-      queue = "ww.server.{0}.handshake".format(hostname),
+      queue = "server.{0}.handshake".format(hostname),
       exchange = "ww.messages",
       routing_key = "server.*.handshake"
     )
     self.cmdBindAttr = dict(
-      queue = "ww.server.{0}.cmd".format(hostname),
+      queue = "server.{0}.cmd".format(hostname),
       exchange = "ww.messages",
       routing_key = "server.*.cmd"
     )
     self.nErrBindAttr = dict(
-      queue = "ww.server.{0}.nodeError".format(hostname),
+      queue = "server.{0}.nodeError".format(hostname),
       exchange = "ww.messages",
       routing_key = "server.*.nodeError"
     )

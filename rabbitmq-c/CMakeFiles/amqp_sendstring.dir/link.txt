@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/amqp_sendstring.dir/amqp_sendstring.o CMakeFiles/amqp_sendstring.dir/utils.o CMakeFiles/amqp_sendstring.dir/unix/platform_utils.o  -o amqp_sendstring -rdynamic 

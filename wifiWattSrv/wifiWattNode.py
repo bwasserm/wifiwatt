@@ -39,8 +39,8 @@ class wwDataPoint(object):
     self.timestamp = timestamp
     self.data = data
 
-  def getListObj(self):
-    return [self.timestamp, self.data]
+  def dictRepr(self):
+    return dict(timestamp=self.timestamp, data=self.data)
 
 class wwNodeSubscriber(object):
   """
@@ -63,6 +63,9 @@ class wifiWattNode(object):
     self.daybuf = ringBuffer(17280)
     # hourbuf holds 1hrs(3600s) of data at 5 points/1s
     self.hourbuf = ringBuffer(18000)
+
+    # define state
+    self.relayOn = False;
 
     # define subscription lists
     self.subs = dict(
@@ -87,53 +90,77 @@ class wifiWattNode(object):
     print(newTime)
     return (oldTime + 0.150) < newTime
 
-  def appendData(self, newDP, statusCallback = None, hourCallback = None,
-    dayCallback = None):
+  def appendData(self, newDP, relayState):
     """
     take a new wwDataPoint, update the buffers, and fire the appropriate
     callbacks to send data to browsers
     newDP: wwDataPoint
     """
     # given a wwDataPoint, add it to the necessary lists
+    # check if it has been long enough since the last hour point
     if(self.__checkHourThresh(newDP)):
-      print("added new hour buf data")
-      # print(repr(self.hourbuf.getBuf()))
+      # print("added new hour buf data")
       self.hourbuf.append(newDP)
-      # then, fire optional callbacks to push data to browser
-      if(statusCallback != None):
-        statususCallback(newDP)
-      if(hourCallback != None):
-        hourCallback(newDP)
+
+      # update relayState
+      self.relayOn = relayState
+
+      # then, push this data to all subscribed connections
+      for conn in self.subs["status"]:
+        conn.statusCb( [newDP.dictRepr()], self.hostname, self.relayOn)
+      for conn in self.subs["hour"]:
+        conn.hourCb( [newDP.dictRepr()], self.hostname)
+
+    # check if it has been long enough since the last day point
     if(self.__checkDayThresh(newDP)):
       self.daybuf.append(newDP)
 
+      # push to subscribers
+      for conn in self.subs["day"]:
+        conn.dayCb( [newDP.dictRepr()], self.hostname)
 
-  def newSubscription(self, name, type):
+
+  def newSubscription(self, sockjsConn, type):
     """
     register a new subscription to a node's data
     name: web client id
     type: status, hour, day
     """
-    self.subs[type].append(name)
+    # check message structure
+    if(not(type == "status" or type == "day" or type == "hour")):
+      print("Can't grant subscription for unknown type!")
+    # ok? grant subscription
+    self.subs[type].append(sockjsConn)
+    # send back old data
+    if(type == "status"):
+      # grab last state
+      sockjsConn.statusCb([self.hourbuf.getLast().dictRepr()], self.hostname,self.relayOn);
+    elif(type == "hour"):
+      # assemble the old data, then push back
+      oldData = self.recallHistory(self.hourbuf)
+      sockjsConn.hourCb(oldData, self.hostname)
+    elif(type == "day"):
+      # assemble the old data, then push back
+      oldData = self.recallHistory(self.daybuf)
+      sockjsConn.dayCb(oldData, self.hostname)
+      
 
   def delSubscription(self, name, type):
     self.subs[type].remove(name)
 
+  def powerSet(self, newVal):
+    self.relayState = newVal
 
-  def recallHistory(self, type):
+
+  def recallHistory(self, buf):
     """
     take a type of history and return the 2D list of datapoint objects
-    type: day, hour
+    buf: a data buffer
     """
-    # pick a buffer
-    if(type == "day"):
-      buf = self.daybuf
-    else:
-      buf = self.hourbuf
     # build the output list
     listOut = []
     for dp in buf.getBuf():
-      listOut.append(dp.getListObj)
+      listOut.append(dp.dictRepr())
     return listOut
 
 

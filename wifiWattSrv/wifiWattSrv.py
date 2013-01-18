@@ -1,23 +1,41 @@
+
+
+# debugging
 import traceback
 import sys
-import socket
 import random
+
+# prog basics
 import time
 import logging
+import os.path
+import uuid
+import copy
+from tornado.options import define, options
+
+# tornado engine
+import socket
 import tornado.auth
 import tornado.escape
 import tornado.ioloop
 import tornado.options
 import tornado.web
-import os.path
-import uuid
+
+# sockJS lib
+import sockjs.tornado
+import json
+
+# pika (RabbitMQ lib)
 import pika
 from pika.adapters.tornado_connection import TornadoConnection
-from tornado.options import define, options
+
+# helper files
 import wifiWattRabbitConfig
 import wifiWattNode
+import watermark
 
-# some global helpers
+################################################################################
+## some global helpers #########################################################
 define("port", default=8080, help="run on the given port", type=int)
 
 LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
@@ -27,19 +45,21 @@ LOGGER = logging.getLogger(__name__)
 rc = wifiWattRabbitConfig.generateRabbitObjs(socket.gethostname())
 
 prefMsgRate = 0.2 # (s)
-# / global helpers
+tornadoApp = None # we're going to cheat, since I can't figure out how to pass
+# this to the SockJSClient instance
 
-
+## / global helpers ############################################################
+## Tornado App Definition ######################################################
 
 class Application(tornado.web.Application):
 
   # TODO: think about having a timeout to zero-fill the data for disconnected nodes
 
-  def __init__(self):
+  def __init__(self, sockJSUrls):
     # setup tornado app
     handlers = [
       (r"/", MainHandler),
-    ]
+    ] + sockJSUrls
     settings = dict(
       cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__",
       # login_url="/auth/login",
@@ -52,6 +72,7 @@ class Application(tornado.web.Application):
 
     # application data structures
     self.nodes = dict() # dict of hostname=wifiWattNode(object)
+    self.webClients = set()
 # / class Application
 
 
@@ -63,21 +84,167 @@ class MainHandler(tornado.web.RequestHandler):
 # / class MainHandler
 
 
+## / Tornado App Definition ####################################################
+################################################################################
 
+class SockJSClient(sockjs.tornado.SockJSConnection):
+  webClients = set() # class var
+
+  ## Connection Setup ##########################################################
+  def on_open(self, info):
+    self.app = tornadoApp
+    self.app.webClients = self.webClients
+    # add to client pool
+    self.webClients.add(self)
+    # inform/subscript the webclient of/to known nodes with newNode callback
+    for (nodeName, nodeObj) in self.app.nodes.iteritems():
+      self.newNodeCb(nodeObj)
+
+
+    # nodesList = self.app.nodes.keys()
+    # if(len(nodesList) > 0):
+    #   msgPayload = dict(nodes=nodesList)
+    #   self.sendJson("newNodes", msgPayload)
+    # # subscribe to status of all existing nodes
+    # for nodeHostname, nodeObj in self.app.nodes.iteritems():
+    #   nodeObj.newSubscription(self, "status")
+    # TODO: when a new person subscribes, should we send them data or wait for request?
+
+  def on_close(self):
+    # remove from client pool
+    self.webClients.remove(self)
+    # unsubscribe from all lists
+    for nodeHostname, nodeObj in self.app.nodes.iteritems():
+      nodeObj.delSubscription(self, "status")
+      nodeObj.delSubscription(self, "hour")
+      nodeObj.delSubscription(self, "day")
+
+  def sendJson(self, msgType, payload):
+    """
+    send a message to web client in json format
+    msgType(string): message type key
+    payload(dict): data of the message; msgType is appended
+    """
+    # msgDict = copy.deepcopy(payload)
+    msgDict = payload # we're always given a temp dict anyways
+    msgDict["type"] = msgType
+    msgString = json.dumps(msgDict)
+    self.send(msgString)
+
+  def on_message(self, msg):
+    # attempt to unpack message and check integrity
+    LOGGER.info("new message: %s", msg)
+    try:
+      msgJson = json.loads(msg)
+    except:
+      LOGGER.error('Got malformed json from client %s', repr(self))
+      return -1
+    if("type" not in msgJson):
+      LOGGER.error('Got message without type from client %s', repr(self))
+      return -1
+    msgType = msgJson["type"]
+    # dispatch to correct handler
+    if(msgType == "subscription"):
+      self.subscriptionHandler(msgJson)
+    elif(msgType == "delSubscription"):
+      self.delSubscriptionHandler(msgJson)
+    elif(msgType == "nodePower"):
+      self.nodePwrHandler(msgJson)
+    else:
+      LOGGER.error('Couldn\'t handle message type from client %s', repr(self))
+
+  ## Handlers (deal with requests from browser) ################################
+  def subscriptionHandler(self, msgJson):
+    # check for malformed message
+    if("hostname" not in msgJson):
+      LOGGER.error('No hostname in sub request from %s!', repr(self))
+      return -1
+    if(("subType" not in msgJson) and
+      not (msgJson["subType"] == "day" or msgJson["subType"] == "hour")):
+      LOGGER.error('Bad sub subType from %s!', repr(self))
+      return -1
+    # try to grant subscription
+    hostname = msgJson["hostname"]
+    if(hostname not in self.app.nodes):
+      LOGGER.error('Sub request for mystery hostname from %s!', repr(self))
+      return -1
+    self.app.nodes[hostname].newSubscription(self, msgJson["subType"])
+
+
+  def delSubscriptionHandler(self, msgJson):
+    # check for malformed message
+    if("hostname" not in msgJson):
+      LOGGER.error('No hostname in delSub request from %s!', repr(self))
+      return -1
+    if(("subType" not in msgJson) and
+      not (msgJson["subType"] == "day" or msgJson["subType"] == "hour")):
+      LOGGER.error('Bad delSub subType from %s!', repr(self))
+      return -1
+    # try to grant subscription
+    hostname = msgJson["hostname"]
+    if(hostname not in self.app.nodes):
+      LOGGER.error('DelSub request for mystery hostname from %s!', repr(self))
+      return -1
+    self.app.nodes[hostname].delSubscription(self, msgJson["subType"])
+
+  def nodePwrHandler(self, msgJson):
+    # check for malformed message
+    if("nodeName" not in msgJson):
+      LOGGER.error('No nodeName in power request from %s!', repr(self))
+      return -1
+    # try to grant power on
+    nodeName = msgJson["nodeName"]
+    if(nodeName not in self.app.nodes):
+      LOGGER.error('Power request for mystery nodeName from %s!', repr(self))
+      return -1
+    self.app.nodes[nodeName].powerSet(msgJson["pwrVal"])
+    # send rabbit cmd
+    self.app.rabbit.sendNodeCtrlMsg(nodeName, 1 if msgJson["pwrVal"] else 0) 
+
+# todo: make the new data callbacks go to all sockjs connections
+
+  ## Callbacks (send back to browser) ##########################################
+  def statusCb(self, dataList, nodeName, relayState):
+    msg = dict(
+      dataPoints = dataList,
+      subType = "status",
+      nodeName = nodeName,
+      relayState = relayState
+    )
+    self.sendJson("newData", msg)
+
+  def hourCb(self, dataList, nodeName):
+    msg = dict(
+      dataPoints = dataList,
+      nodeName = nodeName,
+      subType = "hour"
+    )
+    self.sendJson("newData", msg)
+
+  def dayCb(self, dataList, nodeName):
+    msg = dict(
+      dataPoints = dataList,
+      nodeName = nodeName,
+      subType = "day"
+    )
+    self.sendJson("newData", msg)
+
+  def newNodeCb(self, nodeObj):
+    # send back a list of new nodes (only 1 in this case)
+    msgPayload = dict( nodes = [nodeObj.hostname] )
+    self.sendJson("newNodes", msgPayload)
+    # subscribe user to this node's status
+    nodeObj.newSubscription(self, "status")
+
+
+  
+
+
+## / class SockJSClient ########################################################
+################################################################################
 
 class RabbitClient(object):
-  """This is an example publisher that will handle unexpected interactions
-  with RabbitMQ such as channel and connection closures.
 
-  If RabbitMQ closes the connection, it will reopen it. You should
-  look at the output, as there are limited reasons why the connection may
-  be closed, which usually are tied to permission related issues or
-  socket timeouts.
-
-  It uses delivery confirmations and illustrates one way to keep track of
-  messages that have been sent and if they've been confirmed by RabbitMQ.
-
-  """
   EXCHANGE = 'message'
   EXCHANGE_TYPE = 'topic'
   PUBLISH_INTERVAL = .001
@@ -101,9 +268,7 @@ class RabbitClient(object):
     self.app = app
     self.ioloop = ioloop
 
-  ##############################################################################
-  ## Connection Logic                                                         ##
-  ##############################################################################
+  ## Connection Logic ##########################################################
 
   def connect(self):
     LOGGER.info('Connecting to RabbitMQ')
@@ -153,9 +318,14 @@ class RabbitClient(object):
     self.add_on_channel_close_callback()
     self.setupExngsQueues()
 
-  ##############################################################################
-  ## Message Route Init                                                       ##
-  ##############################################################################
+  def sendNodeCtrlMsg(self, nodeHostname, ctrlCode):
+    self._channel.basic_publish(
+      rc.msgExngAttr["exchange"],
+      "node.{0}.cmd".format(nodeHostname),
+      str(ctrlCode)
+    )
+
+  ## Message Route Init ########################################################
 
   def setupExngsQueues(self):
     LOGGER.info('')
@@ -210,9 +380,7 @@ class RabbitClient(object):
     LOGGER.info('Server ready!')
 
 
-  ##############################################################################
-  ## Handlers                                                                 ##
-  ##############################################################################
+  ## Handlers ##################################################################
 
 # [I 130116 01:17:40 wifiWattSrv:203] 
 # Bad message (TypeError('not all arguments converted during string formatting',)):
@@ -230,21 +398,40 @@ class RabbitClient(object):
     :param pika.Spec.BasicProperties: properties
     :param str|unicode body: The message body
     """
-    # attempt to read message header info
-    if "hostname" in prop.headers:
-      hostname = prop.headers["hostname"]
-    else:
-      LOGGER.error('Couldn\'t read hostname from message!')
+    # attempt to parse message and check fields
+    try:
+      msgData = json.loads(body)
+    except:
+      LOGGER.error("Couldn't parse message. Malformed.")
       return -1
-    # parse the message 
-    value = float(body)
-    LOGGER.info('Got new value "%f" from hostname <%s>.', value, hostname)
+    if(("hostname" not in msgData)
+      or ("current" not in msgData)
+      or ("relayState" not in msgData)):
+      LOGGER.error("Couldn't parse message. Mising fields.")
+      return -1
+    hostname = msgData["hostname"]
+    value = float(msgData["current"])
+    relayState = bool(int(msgData["relayState"]))
+    LOGGER.info("Raw: %s Parsed: %d", msgData["relayState"], int(relayState))
+
     # if we've inited this node, call it's append method
     if hostname in self.app.nodes:
+      nodeObj = self.app.nodes[hostname]
       newDP = wifiWattNode.wwDataPoint(value, time.time())
-      self.app.nodes[hostname].appendData(newDP, None, None, None) # todo: callbacks
+      nodeObj.appendData(newDP, relayState)
     else:
       LOGGER.error('No node with hostname <%s>!', hostname)
+
+    # attempt to read message header info
+    # if "hostname" in prop.headers:
+    #   hostname = prop.headers["hostname"]
+    # else:
+    #   LOGGER.error('Couldn\'t read hostname from message!')
+    #   return -1
+    # # parse the message 
+    # value = float(body)
+    # LOGGER.info('Got new value "%f" from hostname <%s>.', value, hostname)
+    
 
 
   def initNodeHandler(self, channel, basicDeliver, prop, body):
@@ -257,7 +444,7 @@ class RabbitClient(object):
     nodes = self.app.nodes
     # check if we already have structures for this node
     if(hostname in nodes):
-      # we have it already. do we want to update here?
+      # we have it already
       LOGGER.info('Got handshake for node <%s>; already exists.', hostname)
     else:
       # make a new node instance
@@ -265,82 +452,20 @@ class RabbitClient(object):
       newNode = wifiWattNode.wifiWattNode(hostname)
       nodes[hostname] = newNode
     # send back the prefered message rate to start value stream
-    self.basic_publish(
+    self._channel.basic_publish(
       rc.msgExngAttr["exchange"],
       "node.{0}.handshake".format(hostname),
       str(prefMsgRate)
     )
+    # notify all our webclients that we have a new node
+    for webClient in self.app.webClients:
+      webClient.newNodeCb(newNode)
 
   def serverCmdHandler(self, channel, basicDeliver, prop, body):
     LOGGER.info('Got new command: %s', msg)
 
   def nErrHandler(self, channel, basicDeliver, prop, body):
     LOGGER.info('Got node error: %s', msg)
-
-
-
-
-  # def on_delivery_confirmation(self, method_frame):
-  #   confirmation_type = method_frame.method.NAME.split('.')[1].lower()
-  #   LOGGER.info('Received %s for delivery tag: %i',
-  #         confirmation_type,
-  #         method_frame.method.delivery_tag)
-  #   if confirmation_type == 'ack':
-  #     self._acked += 1
-  #   elif confirmation_type == 'nack':
-  #     self._nacked += 1
-  #   self._deliveries.remove(method_frame.method.delivery_tag)
-  #   LOGGER.info('Published %i messages, %i have yet to be confirmed, '
-  #         '%i were acked and %i were nacked',
-  #         self._message_number, len(self._deliveries),
-  #         self._acked, self._nacked)
-
-  # def enable_delivery_confirmations(self):
-  #   LOGGER.info('Issuing Confirm.Select RPC command')
-  #   self._channel.confirm_delivery(self.on_delivery_confirmation)
-
-  # def publish_message(self):
-  #   if self._stopping:
-  #     return
-
-  #   message = 'The current epoch value is %i' % time.time()
-  #   properties = pika.BasicProperties(app_id='example-publisher',
-  #                     content_type='text/plain')
-
-  #   self._channel.basic_publish(rc.valueExngAttr["exchange"], self.ROUTING_KEY,
-  #                 message, properties)
-  #   self._message_number += 1
-  #   self._deliveries.append(self._message_number)
-  #   LOGGER.info('Published message # %i', self._message_number)
-  #   self.schedule_next_message()
-
-  # def schedule_next_message(self):
-  #   """If we are not closing our connection to RabbitMQ, schedule another
-  #   message to be delivered in PUBLISH_INTERVAL seconds.
-
-  #   """
-  #   if self._stopping:
-  #     return
-  #   LOGGER.info('Scheduling next message for %0.1f ms',
-  #         self.PUBLISH_INTERVAL)
-  #   self._connection.add_timeout(self.PUBLISH_INTERVAL,
-  #                  self.publish_message)
-
-  # def start_publishing(self):
-  #   """This method will enable delivery confirmations and schedule the
-  #   first message to be sent to RabbitMQ
-
-  #   """
-  #   LOGGER.info('Issuing consumer related RPC commands')
-  #   self.enable_delivery_confirmations()
-  #   self.schedule_next_message()
-
-  # def on_bindok(self, unused_frame):
-  #   """This method is invoked by pika when it receives the Queue.BindOk
-  #   response from RabbitMQ. Since we know we're now setup and bound, it's
-  #   time to start publishing."""
-  #   LOGGER.info('Queue bound')
-  #   self.start_publishing()
 
   def close_channel(self):
     """Invoke this command to close the channel with RabbitMQ by sending
@@ -360,16 +485,31 @@ class RabbitClient(object):
     LOGGER.info('Creating a new channel')
     self._connection.channel(on_open_callback=self.on_channel_open)
 
-
-
+### / class RabbitClient #######################################################
+################################################################################
 
 
 def main():
+  global tornadoApp
+  watermark.printWatermark()
+
   tornado.options.parse_command_line()
 
-  app = Application()
+  sockJSRouter = sockjs.tornado.SockJSRouter(SockJSClient, '/socket')
+
+  app = Application(sockJSRouter.urls)
+  tornadoApp = app # globals cheating
   ioloop = tornado.ioloop.IOLoop.instance()
 
+  # instance sockJS server
+  # app.sockjs = sockjs.tornado.SockJSRouter(SockJSClient, '/socket')
+  # for handler in app.sockjs.urls:
+  #   print(handler)
+  #   print("")
+  #   # app.add_handlers(handler[0], handler[1])
+  # app.add_handlers(r"*", app.sockjs.urls)
+
+  # instance rabbitMQ server
   app.rabbit = RabbitClient(app, ioloop)
   app.listen(options.port)
   
