@@ -99,16 +99,12 @@ int main(void) {
 
   if(strcmp(hostname, "applepi") == 0){
     adc_mult = ADC_APPLEPI_MULT;
-    printf("%s\n", "applepi");
   }else if(strcmp(hostname, "blueberrypi") == 0){
     adc_mult = ADC_BLUEBERRYPI_MULT;
-    printf("%s\n", "blueberrypi");
   }else if(strcmp(hostname, "cranberrypi") == 0){
     adc_mult = ADC_CRANBERRYPI_MULT;
-    printf("%s\n", "cranberrypi");
   }else{
     adc_mult = ADC_DRAGONFRUITPI_MULT;
-    printf("%s\n", "dragonfruitpi");
   }
 
   printf("%s\n", hostname);
