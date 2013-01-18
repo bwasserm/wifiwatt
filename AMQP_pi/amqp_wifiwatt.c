@@ -121,8 +121,8 @@ int main(void) {
   queue_hand_name = amqp_cstring_bytes(queue_hand_name_buf);
   route_hand_name = amqp_cstring_bytes(queue_hand_name_buf);
   sprintf(queue_cmd_name_buf, "node.%s.cmd", hostname);
-  queue_cmd_name = amqp_cstring_bytes(queue_hand_name_buf);
-  route_cmd_name = amqp_cstring_bytes(queue_hand_name_buf);
+  queue_cmd_name = amqp_cstring_bytes(queue_cmd_name_buf);
+  route_cmd_name = amqp_cstring_bytes(queue_cmd_name_buf);
   exch_value_name = amqp_cstring_bytes(EXCH_VALUE_NAME);
   exch_mess_name = amqp_cstring_bytes(EXCH_MESS_NAME);
   exch_value_type = amqp_cstring_bytes(EXCH_VALUE_TYPE);
@@ -209,7 +209,6 @@ int main(void) {
           exit(1);
         }
   
-        printf("Relay: %d\n", buf[0]);
         if(buf[0] == '0'){
           GPIO_CLR = 1 << RELAY_NUM; 
         }else if(buf[0] == '1'){
