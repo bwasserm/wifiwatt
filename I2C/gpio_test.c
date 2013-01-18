@@ -27,6 +27,7 @@ volatile unsigned *gpio;
 
 #define GPIO_SET *(gpio+7)  // sets bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
+#define GPIO_READ *(gpio+13)
 
 #define RELAY_NUM 14
 
@@ -58,9 +59,11 @@ int main(int argc, char **argv)
     printf("Loop\n");
     GPIO_SET = 1 << RELAY_NUM;
     GPIO_SET = 1 << 7;
+    printf("Set: %d\n", (*(gpio+13) >> RELAY_NUM) & 1);
     sleep(1);
     GPIO_CLR = 1 << RELAY_NUM;
     GPIO_CLR = 1 << 7;
+    printf("Clear: %d\n", (*(gpio+13) >> RELAY_NUM) & 1);
     sleep(1);
   }
 
