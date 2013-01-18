@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/amqp-publish.dir/publish.o CMakeFiles/amqp-publish.dir/common.o  -o amqp-publish -rdynamic 

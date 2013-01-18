@@ -1,5 +1,0 @@
-/home/pi/rabbitmq-c/bin-rabbitmq-c/CMakeFiles/amqp-consume.dir
-/home/pi/rabbitmq-c/bin-rabbitmq-c/CMakeFiles/amqp-declare-queue.dir
-/home/pi/rabbitmq-c/bin-rabbitmq-c/CMakeFiles/amqp-delete-queue.dir
-/home/pi/rabbitmq-c/bin-rabbitmq-c/CMakeFiles/amqp-get.dir
-/home/pi/rabbitmq-c/bin-rabbitmq-c/CMakeFiles/amqp-publish.dir

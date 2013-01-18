@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/amqp_bind.dir/amqp_bind.o CMakeFiles/amqp_bind.dir/utils.o CMakeFiles/amqp_bind.dir/unix/platform_utils.o  -o amqp_bind -rdynamic 

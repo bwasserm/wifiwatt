@@ -1,9 +1,0 @@
-/home/pi/rabbitmq-c/CMakeFiles/amqp_bind.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_consumer.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_exchange_declare.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_listen.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_listenq.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_producer.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_rpc_sendstring_client.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_sendstring.dir
-/home/pi/rabbitmq-c/CMakeFiles/amqp_unbind.dir

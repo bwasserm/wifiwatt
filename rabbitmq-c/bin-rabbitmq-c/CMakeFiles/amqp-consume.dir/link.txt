@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/amqp-consume.dir/consume.o CMakeFiles/amqp-consume.dir/unix/process.o CMakeFiles/amqp-consume.dir/common.o  -o amqp-consume -rdynamic 

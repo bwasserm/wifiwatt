@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/amqp_rpc_sendstring_client.dir/amqp_rpc_sendstring_client.o CMakeFiles/amqp_rpc_sendstring_client.dir/utils.o CMakeFiles/amqp_rpc_sendstring_client.dir/unix/platform_utils.o  -o amqp_rpc_sendstring_client -rdynamic -lrabbitmq 
