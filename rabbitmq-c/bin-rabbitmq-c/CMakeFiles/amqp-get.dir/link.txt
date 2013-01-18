@@ -1,0 +1,1 @@
+/usr/bin/gcc      CMakeFiles/amqp-get.dir/get.o CMakeFiles/amqp-get.dir/common.o  -o amqp-get -rdynamic 

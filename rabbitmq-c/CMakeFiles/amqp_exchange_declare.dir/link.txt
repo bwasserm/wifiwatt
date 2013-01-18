@@ -1,0 +1,1 @@
+/usr/bin/gcc      CMakeFiles/amqp_exchange_declare.dir/amqp_exchange_declare.o CMakeFiles/amqp_exchange_declare.dir/utils.o CMakeFiles/amqp_exchange_declare.dir/unix/platform_utils.o  -o amqp_exchange_declare -rdynamic 

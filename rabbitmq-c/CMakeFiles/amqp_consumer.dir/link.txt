@@ -1,0 +1,1 @@
+/usr/bin/gcc      CMakeFiles/amqp_consumer.dir/amqp_consumer.o CMakeFiles/amqp_consumer.dir/utils.o CMakeFiles/amqp_consumer.dir/unix/platform_utils.o  -o amqp_consumer -rdynamic 

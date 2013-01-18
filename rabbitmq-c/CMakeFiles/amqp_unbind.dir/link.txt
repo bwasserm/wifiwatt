@@ -1,0 +1,1 @@
+/usr/bin/gcc      CMakeFiles/amqp_unbind.dir/amqp_unbind.o CMakeFiles/amqp_unbind.dir/utils.o CMakeFiles/amqp_unbind.dir/unix/platform_utils.o  -o amqp_unbind -rdynamic 

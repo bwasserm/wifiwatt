@@ -1,0 +1,1 @@
+/usr/bin/gcc      CMakeFiles/amqp-delete-queue.dir/delete_queue.o CMakeFiles/amqp-delete-queue.dir/common.o  -o amqp-delete-queue -rdynamic 
