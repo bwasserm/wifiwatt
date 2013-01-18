@@ -19,7 +19,7 @@
 #define BLOCK_SIZE (4*1024)
 
 // Pi values
-#define PI                "applepi"
+#define PI                "cranberrypi"
 #define HOSTNAME          "lambdadev.pc.cc.cmu.edu"
 #define PORT              5672
 #define EXCH_VALUE_NAME   "ww.valueUpdate"
