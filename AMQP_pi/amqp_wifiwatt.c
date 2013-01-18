@@ -19,24 +19,22 @@
 #define BLOCK_SIZE (4*1024)
 
 // Pi values
-#define PI                "cranberrypi"
 #define HOSTNAME          "lambdadev.pc.cc.cmu.edu"
 #define PORT              5672
 #define EXCH_VALUE_NAME   "ww.valueUpdate"
 #define EXCH_MESS_NAME    "ww.messages"
 #define EXCH_VALUE_TYPE   "fanout"
 #define EXCH_MESS_TYPE    "topic"
-#define QUEUE_HAND_NAME   "node." PI ".handshake"
-#define QUEUE_CMD_NAME    "node." PI ".cmd"
-#define ROUTE_HAND_NAME   QUEUE_HAND_NAME
-#define ROUTE_CMD_NAME    QUEUE_CMD_NAME
 #define ROUTE_HAND_SEND   "server.ANYHOST.handshake"
 
 #define BUF_LEN           65536
 #define HANDSHAKE_STR     "handshake test string"
 
-#define ADC_MULT          0.0722735
-#define ADC_MAX_LEN       200
+#define ADC_APPLEPI_MULT            0.0722735
+#define ADC_BLUEBERRYPI_MULT        0.0722735
+#define ADC_CRANBERRYPI_MULT        0.0722735
+#define ADC_DRAGONFRUITPI_MULT      0.0722735
+#define ADC_MAX_LEN                 200
 
 // GPIO defines
 #define BCM2708_PERI_BASE        0x20000000
@@ -77,6 +75,9 @@ amqp_bytes_t exch_mess_type;
 amqp_bytes_t route_hand_name;
 amqp_bytes_t route_cmd_name;
 
+char hostname[BUF_LEN];
+double adc_mult;
+
 ssize_t get_body(amqp_connection_state_t conn, char* buf, size_t buf_len);
 int perform_handshake(amqp_connection_state_t conn);
 amqp_connection_state_t connect_server(void);
@@ -91,15 +92,41 @@ int main(void) {
   ssize_t mes_len;
   amqp_connection_state_t conn;
 
+  if(gethostname(hostname, BUF_LEN) < 0){
+    fprintf(stderr, "Hostname error\n");
+    exit(1);
+  }
+
+  if(strcmp(hostname, "applepi") == 0){
+    adc_mult = ADC_APPLEPI_MULT;
+    printf("%s\n", "applepi");
+  }else if(strcmp(hostname, "blueberrypi") == 0){
+    adc_mult = ADC_BLUEBERRYPI_MULT;
+    printf("%s\n", "blueberrypi");
+  }else if(strcmp(hostname, "cranberrypi") == 0){
+    adc_mult = ADC_CRANBERRYPI_MULT;
+    printf("%s\n", "cranberrypi");
+  }else{
+    adc_mult = ADC_DRAGONFRUITPI_MULT;
+    printf("%s\n", "dragonfruitpi");
+  }
+
+  printf("%s\n", hostname);
+
+  char queue_hand_name_buf[255];
+  char queue_cmd_name_buf[255];
+
   // Set global strings 
-  queue_hand_name = amqp_cstring_bytes(QUEUE_HAND_NAME);
-  queue_cmd_name = amqp_cstring_bytes(QUEUE_CMD_NAME);
+  sprintf(queue_hand_name_buf, "node.%s.handshake", hostname);
+  queue_hand_name = amqp_cstring_bytes(queue_hand_name_buf);
+  route_hand_name = amqp_cstring_bytes(queue_hand_name_buf);
+  sprintf(queue_cmd_name_buf, "node.%s.cmd", hostname);
+  queue_cmd_name = amqp_cstring_bytes(queue_hand_name_buf);
+  route_cmd_name = amqp_cstring_bytes(queue_hand_name_buf);
   exch_value_name = amqp_cstring_bytes(EXCH_VALUE_NAME);
   exch_mess_name = amqp_cstring_bytes(EXCH_MESS_NAME);
   exch_value_type = amqp_cstring_bytes(EXCH_VALUE_TYPE);
   exch_mess_type = amqp_cstring_bytes(EXCH_MESS_TYPE);
-  route_hand_name = amqp_cstring_bytes(ROUTE_HAND_NAME);
-  route_cmd_name = amqp_cstring_bytes(ROUTE_CMD_NAME);
 
   // Set up gpi pointer for direct register access
   setup_io();
@@ -107,6 +134,7 @@ int main(void) {
   // Switch GPIO 7 to output mode
   INP_GPIO(RELAY_NUM);
   OUT_GPIO(RELAY_NUM);
+
 
   while(1){
     if((conn = connect_server()) == NULL){
@@ -144,10 +172,10 @@ int main(void) {
           }
         }
 
-        current = adc_max * ADC_MULT;
+        current = adc_max * adc_mult;
         relay_state = ((GPIO_READ >> RELAY_NUM) & 1);
         sprintf(buf, "{\"hostname\": \"%s\", \"current\": \"%f\", \"relayState\": \"%d\"}", 
-          PI, current, relay_state & 1);
+          hostname, current, relay_state & 1);
   
         // Publish values to server
         if(!report_error(amqp_basic_publish(conn, 1, exch_value_name, 
@@ -181,6 +209,7 @@ int main(void) {
           exit(1);
         }
   
+        printf("Relay: %d\n", buf[0]);
         if(buf[0] == '0'){
           GPIO_CLR = 1 << RELAY_NUM; 
         }else if(buf[0] == '1'){
@@ -276,7 +305,7 @@ int perform_handshake(amqp_connection_state_t conn){
   // Publish handshake to server
   if(!report_error(amqp_basic_publish(conn, 1, exch_mess_name, 
       amqp_cstring_bytes(ROUTE_HAND_SEND), 0, 
-      0, NULL, amqp_cstring_bytes(PI)), "Message Publish")){
+      0, NULL, amqp_cstring_bytes(hostname)), "Message Publish")){
     return 0;
   }
 
