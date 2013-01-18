@@ -3,8 +3,16 @@ body {
 }
 
 #console {
-  width: 400px;
-  height: 600px;
+  position: absolute;
+  overflow: auto;
+  left: 50%;
+  bottom: 0;
+  width: 600px;
+  height: 100px;
   padding: 10px;
+  margin-left: -300px;
   color: #FFFFFF;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(128, 128, 128, 0.6);
+  border-bottom: 0px;
 }

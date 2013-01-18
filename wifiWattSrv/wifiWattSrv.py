@@ -89,6 +89,7 @@ class MainHandler(tornado.web.RequestHandler):
 class SockJSClient(sockjs.tornado.SockJSConnection):
   webClients = set() # class var
 
+  ## Connection Setup ##########################################################
   def on_open(self, info):
     self.app = tornadoApp
     # add to client pool
@@ -99,18 +100,29 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
       msgPayload = dict(nodes=nodesList)
       self.sendJson("newNodes", msgPayload)
     # subscribe to status of all existing nodes
-    for node in self.app.nodes:
-      node.newSubscription(self, "status")
+    for nodeHostname, nodeObj in self.app.nodes.iteritems():
+      nodeObj.newSubscription(self, "status")
     # TODO: when a new person subscribes, should we send them data or wait for request?
 
   def on_close(self):
     # remove from client pool
     self.webClients.remove(self)
     # unsubscribe from all lists
-    for node in self.app.nodes:
-      node.delSubscription(self, "status")
-      node.delSubscription(self, "hour")
-      node.delSubscription(self, "day")
+    for nodeHostname, nodeObj in self.app.nodes.iteritems():
+      nodeObj.delSubscription(self, "status")
+      nodeObj.delSubscription(self, "hour")
+      nodeObj.delSubscription(self, "day")
+
+  def sendJson(self, msgType, payload):
+    """
+    send a message to web client in json format
+    msgType(string): message type key
+    payload(dict): data of the message; msgType is appended
+    """
+    msgDict = copy.deepcopy(payload)
+    msgDict["type"] = msgType
+    msgString = json.dumps(msgDict)
+    self.send(msgString)
 
   def on_message(self, msg):
     # attempt to unpack message and check integrity
@@ -125,47 +137,49 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
     msgType = msgJson["type"]
     # dispatch to correct handler
     if(msgType == "subscription"):
-      subscriptionHandler(msg)
+      self.subscriptionHandler(msg)
     elif(msgType == "delSubscription"):
-      delSubscriptionHandler(msg)
+      self.delSubscriptionHandler(msg)
     elif(msgType == "nodeOn"):
-      nodeOnHandler(msg)
+      self.nodeOnHandler(msg)
     elif(msgType == "nodeOff"):
-      nodeOffHandler(msg)
+      self.nodeOffHandler(msg)
     else:
       LOGGER.error('Couldn\'t handle message type from client %s', repr(self))
 
+  ## Handlers (deal with requests from browser) ################################
   def subscriptionHandler(self, msg):
     # check for malformed message
     if("hostname" not in msgJson):
       LOGGER.error('No hostname in sub request from %s!', repr(self))
       return -1
-    if(("type" not in msgJson) and
-      not (msgJson["type"] == "day" or msgJson["type"] == "hour")):
-      LOGGER.error('Bad sub type from %s!', repr(self))
+    if(("subType" not in msgJson) and
+      not (msgJson["subType"] == "day" or msgJson["subType"] == "hour")):
+      LOGGER.error('Bad sub subType from %s!', repr(self))
       return -1
     # try to grant subscription
     hostname = msgJson["hostname"]
     if(hostname not in self.app.nodes):
       LOGGER.error('Sub request for mystery hostname from %s!', repr(self))
       return -1
-    self.app.nodes[hostname].newSubscription(self, msgJson["type"])
+    self.app.nodes[hostname].newSubscription(self, msgJson["subType"])
+
 
   def delSubscriptionHandler(msg):
     # check for malformed message
     if("hostname" not in msgJson):
       LOGGER.error('No hostname in delSub request from %s!', repr(self))
       return -1
-    if(("type" not in msgJson) and
-      not (msgJson["type"] == "day" or msgJson["type"] == "hour")):
-      LOGGER.error('Bad delSub type from %s!', repr(self))
+    if(("subType" not in msgJson) and
+      not (msgJson["subType"] == "day" or msgJson["subType"] == "hour")):
+      LOGGER.error('Bad delSub subType from %s!', repr(self))
       return -1
     # try to grant subscription
     hostname = msgJson["hostname"]
     if(hostname not in self.app.nodes):
       LOGGER.error('DelSub request for mystery hostname from %s!', repr(self))
       return -1
-    self.app.nodes[hostname].delSubscription(self, msgJson["type"])
+    self.app.nodes[hostname].delSubscription(self, msgJson["subType"])
 
   def nodeOnHandler(msg):
     # check for malformed message
@@ -189,18 +203,38 @@ class SockJSClient(sockjs.tornado.SockJSConnection):
     if(hostname not in self.app.nodes):
       LOGGER.error('PowerOff request for mystery hostname from %s!', repr(self))
       return -1
-    self.app.nodes[hostname].powerOff() 
+    self.app.nodes[hostname].powerOff()
 
-  def sendJson(self, msgType, payload):
-    """
-    send a message to web client in json format
-    msgType(string): message type key
-    payload(dict): data of the message; msgType is appended
-    """
-    msgDict = copy.deepcopy(payload)
-    msgDict["type"] = msgType
-    msgString = json.dumps(msgDict)
-    self.send(msgString)
+# todo: make the new data callbacks go to all sockjs connections
+
+  ## Callbacks (send back to browser) ##########################################
+  def statusCb(self, dataList, nodeName, relayState):
+    msg = dict(
+      dataPoints = dataList,
+      subType = "status",
+      nodeName = nodeName,
+      relayState = relayState
+    )
+    self.sendJson("newData", msg)
+
+  def hourCb(self, dataList, nodeName):
+    msg = dict(
+      dataPoints = dataList,
+      nodeName = nodeName,
+      subType = "hour"
+    )
+    self.sendJson("newData", msg)
+
+  def dayCb(self, dataList, nodeName):
+    msg = dict(
+      dataPoints = dataList,
+      nodeName = nodeName,
+      subType = "day"
+    )
+    self.sendJson("newData", msg)
+
+
+  
 
 
 ## / class SockJSClient ########################################################
@@ -365,8 +399,9 @@ class RabbitClient(object):
     LOGGER.info('Got new value "%f" from hostname <%s>.', value, hostname)
     # if we've inited this node, call it's append method
     if hostname in self.app.nodes:
+      nodeObj = self.app.nodes[hostname]
       newDP = wifiWattNode.wwDataPoint(value, time.time())
-      self.app.nodes[hostname].appendData(newDP, None, None, None) # todo: callbacks
+      nodeObj.appendData(newDP)
     else:
       LOGGER.error('No node with hostname <%s>!', hostname)
 
