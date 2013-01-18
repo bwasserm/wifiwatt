@@ -58,9 +58,11 @@ int main(int argc, char **argv)
     printf("Loop\n");
     GPIO_SET = 1 << RELAY_NUM;
     GPIO_SET = 1 << 7;
+    printf("Set: %b\n", (GPIO_SET >> RELAY_NUM) & 1);
     sleep(1);
     GPIO_CLR = 1 << RELAY_NUM;
     GPIO_CLR = 1 << 7;
+    printf("Clear: %b\n", (GPIO_SET >> RELAY_NUM) & 1);
     sleep(1);
   }
 
