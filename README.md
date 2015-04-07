@@ -9,6 +9,9 @@ Neil (nabcouwe@)
 Ian (ihartwig@)
 Andrew (amort@)
 
+For more info, we've put together a quick [review of this project here](https://github.com/bwasserm/wifiwatt/blob/master/WifiWatt%20Project%20Summary.pdf).
+
+Unfortunately, the exact installations and setup directions are outdated/would probably not work anymore as this is not an active project.
 
 I've been using the following guide for programming the ADC functionality:
 http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&t=56429
